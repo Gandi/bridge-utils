@@ -1,3 +1,7 @@
+This document is out of date.
+
+
+---
 It is now possible to use iptables to firewall on bridge
 forwarding. It works mostly like the 2.2 patch, but with this
 difference that the packets are just passed to the 'main' chains.
@@ -50,4 +54,3 @@ bash#
 
 
 Lennert Buytenhek
-<buytenh@openrock.net>

@@ -4,9 +4,8 @@ In this package you'll find the new-and-improved linux ethernet
 bridging code. I (Lennert Buytenhek) rewrote the linux bridging code
 because the old code was a big mess and nonextensible.
 
-Snapshots of the new code are published at:
-http://openrock.net/bridge         and
-ftp://openrock.net/bridge
+The new code is published at:
+	http://bridge.sourceforge.net/
 
 
 
@@ -24,15 +23,13 @@ Advantages of the new code are:
 - It works as a module.
 
 
-If you have any comments, questions or suggestions, please visit
-http://openrock.net and look for the bridge mailing list. Or
-mail me directly at buytenh@openrock.net.
+If you have any comments, questions or suggestions, please send email to
+the mailing list.
 
 
 
 Have fun!
 Lennert Buytenhek
-<buytenh@openrock.net>
 
 
 

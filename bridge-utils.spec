@@ -1,10 +1,10 @@
 Summary: Utilities for configuring the linux ethernet bridge.
 Name: bridge-utils
-Version: 0.9.2
+Version: 0.9.3
 Release: 1
 Copyright: GPL
 Group: Applications/System
-Source0: ftp://openrock.net/bridge/bridge-utils-%{PACKAGE_VERSION}.tar.gz
+Source0: http://bridge.sourceforge.net/bridge-utils/bridge-utils-%{PACKAGE_VERSION}.tar.gz
 BuildRoot: /var/tmp/%{name}-root
 
 %description
