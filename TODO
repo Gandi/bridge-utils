@@ -1,48 +1,39 @@
-Main code
+main code
 ---------
 we have a tiny deviation from IEEE 802.1d: we don't kill the awaiting-tx skb
-queue when a port leaves the FORWARDING state
-
+  queue when a port leaves the FORWARDING state
 RH initscripts for setting up bridge interfaces automatically
-
 improve documentation..
-
 bridge ID change notifications
-
 for 2.4: module_author and module_description
-
 smarter fdb timeout scheme
-
 slab cache for fdbs?
-
 I'm not happy with the current timer tick interval
+make the bridge device zerocopy/highmem transparent
+move the spanning tree code to userspace
 
 
 
-Netfilter patch
+managerial
+----------
+backup mailing list archives of openrock and math somewhere
+revamp the web page
+add web page mirrors
+
+
+
+netfilter patch
 ---------------
 make orig{src,dst}addr an anonymous union
-
 sync MAC addresses DNAT/SNAT
-
 check 'MASQUERADE'
-
 make src mac substitution configurable
-
 br_nf_pre_routing: ip_route_output -> output_key
-
 br_nf_forward_postrouting: physoutdev (but id.)
-
 output_maybe_reroute: pass directly?
-
 br_nf_forward: physoutdev (but id.)
-
 remove outdev assign in br_nf_local_out_postrouting
-
 check: don't send unreachables
-
 stp state delay
-
 enslaved devs same MAC (like tap), then one changes
-
 module unload race (as of 0.0.2)
