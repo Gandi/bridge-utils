@@ -24,7 +24,7 @@
 #include <net/if.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <bits/libc-lock.h>
+//#include <bits/libc-lock.h>
 
 /* Try to get a socket to talk to the kernel.  */
 #if defined SIOCGIFINDEX || defined SIOCGIFNAME
