@@ -75,12 +75,12 @@ int br_ioctl(unsigned long arg0, unsigned long arg1, unsigned long arg2)
 	return br_ioctl32(arg0, arg1, arg2);
 }
 
-int br_get_version()
+int br_get_version(void)
 {
 	return br_ioctl(BRCTL_GET_VERSION, 0, 0);
 }
 
-int br_add_bridge(char *brname)
+int br_add_bridge(const char *brname)
 {
 	char _br[IFNAMSIZ];
 
@@ -91,7 +91,7 @@ int br_add_bridge(char *brname)
 	return 0;
 }
 
-int br_del_bridge(char *brname)
+int br_del_bridge(const char *brname)
 {
 	char _br[IFNAMSIZ];
 

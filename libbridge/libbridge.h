@@ -110,8 +110,8 @@ struct bridge *br_find_bridge(char *brname);
 struct port *br_find_port(struct bridge *br, char *portname);
 char *br_get_state_name(int state);
 
-int br_add_bridge(char *brname);
-int br_del_bridge(char *brname);
+int br_add_bridge(const char *brname);
+int br_del_bridge(const char *brname);
 int br_add_interface(struct bridge *br, int ifindex);
 int br_del_interface(struct bridge *br, int ifindex);
 int br_set_bridge_forward_delay(struct bridge *br, struct timeval *tv);
