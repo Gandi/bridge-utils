@@ -72,22 +72,23 @@ static void __port_info_copy(struct port_info *info, struct __port_info *i)
 			i->hold_timer_value);
 }
 
-int br_read_info(struct bridge *br)
+static int br_read_info(struct bridge *br)
 {
 	struct __bridge_info i;
 
-	if (if_indextoname(br->ifindex, br->ifname) == NULL)
-		return 1;
+	if (if_indextoname(br->ifindex, br->ifname) == NULL) {
+		return ENODEV;
+	}
 
 	if (br_device_ioctl(br, BRCTL_GET_BRIDGE_INFO,
 			    (unsigned long)&i, 0, 0) < 0)
-		return 1;
+		return errno;
 
 	__bridge_info_copy(&br->info, &i);
 	return 0;
 }
 
-int br_read_port_info(struct port *p)
+static int br_read_port_info(struct port *p)
 {
 	struct __port_info i;
 
@@ -153,7 +154,6 @@ int br_make_port_list(struct bridge *br)
 
 int br_make_bridge_list()
 {
-	int err;
 	int i;
 	int ifindices[32];
 	int num;
@@ -170,26 +170,17 @@ int br_make_bridge_list()
 		memset(br, 0, sizeof(struct bridge));
 		br->ifindex = ifindices[i];
 		br->firstport = NULL;
+		if ( br_read_info(br) != 0 ||
+		     br_make_port_list(br) != 0) {
+			/* ignore the problem could just be a race! */
+			free(br);
+			continue;
+		}
 		br->next = bridge_list;
 		bridge_list = br;
-		if ((err = br_read_info(br)) != 0)
-			goto error_out;
-		if ((err = br_make_port_list(br)) != 0)
-			goto error_out;
 	}
 
 	return 0;
-
- error_out:
-	while (bridge_list != NULL) {
-		struct bridge *nxt;
-
-		nxt = bridge_list->next;
-		br_nuke_bridge(bridge_list);
-		bridge_list = nxt;
-	}
-
-	return err;
 }
 
 int br_init()
