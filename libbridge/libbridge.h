@@ -82,19 +82,18 @@ extern void br_shutdown(void);
 extern int br_foreach_bridge(int (*iterator)(const char *brname, void *),
 			     void *arg);
 extern int br_foreach_port(const char *brname,
-			   int (*iterator)(const char *brname,
-					   const char *port, int ifindex,
-					   void *),
+			   int (*iterator)(const char *brname, const char *port,
+					   void *arg ),
 			   void *arg);
 extern const char *br_get_state_name(int state);
 
 extern int br_get_bridge_info(const char *br, struct bridge_info *info);
-extern int br_get_port_info(const char *brname, const char *port, int count, 
+extern int br_get_port_info(const char *brname, const char *port, 
 			    struct port_info *info);
 extern int br_add_bridge(const char *brname);
 extern int br_del_bridge(const char *brname);
-extern int br_add_interface(const char *br, int ifindex);
-extern int br_del_interface(const char *br, int ifindex);
+extern int br_add_interface(const char *br, const char *dev);
+extern int br_del_interface(const char *br, const char *dev);
 extern int br_set_bridge_forward_delay(const char *br, struct timeval *tv);
 extern int br_set_bridge_hello_time(const char *br, struct timeval *tv);
 extern int br_set_bridge_max_age(const char *br, struct timeval *tv);

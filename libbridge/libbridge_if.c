@@ -65,3 +65,53 @@ int br_del_bridge(const char *brname)
 	} 
 	return  ret < 0 ? errno : 0;
 }
+
+int br_add_interface(const char *bridge, const char *dev)
+{
+	struct ifreq ifr;
+	int err;
+	int ifindex = if_nametoindex(dev);
+
+	if (ifindex == 0) 
+		return ENODEV;
+	
+	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
+#ifdef SIOCBRADDIF
+	ifr.ifr_ifindex = ifindex;
+	err = ioctl(br_socket_fd, SIOCBRADDIF, &ifr);
+	if (err < 0)
+#endif
+	{
+		unsigned long args[4] = { BRCTL_ADD_IF, ifindex, 0, 0 };
+					  
+		ifr.ifr_data = (char *) args;
+		err = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
+	}
+
+	return err < 0 ? errno : 0;
+}
+
+int br_del_interface(const char *bridge, const char *dev)
+{
+	struct ifreq ifr;
+	int err;
+	int ifindex = if_nametoindex(dev);
+
+	if (ifindex == 0) 
+		return ENODEV;
+	
+	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
+#ifdef SIOCBRDELIF
+	ifr.ifr_ifindex = ifindex;
+	err = ioctl(br_socket_fd, SIOCBRDELIF, &ifr);
+	if (err < 0)
+#endif		
+	{
+		unsigned long args[4] = { BRCTL_DEL_IF, ifindex, 0, 0 };
+					  
+		ifr.ifr_data = (char *) args;
+		err = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
+	}
+
+	return err < 0 ? errno : 0;
+}

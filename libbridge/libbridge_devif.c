@@ -70,16 +70,13 @@ static void fetch_id(struct sysfs_directory *sdir, const char *name,
 
 	memset(id, 0, sizeof(id));
 	attr = sysfs_get_directory_attribute(sdir, (char *) name);
- 	dprintf("fetch_id %s/%s = %s\n", sdir->path, name,
-		attr ? attr->value : "<null>\n");
-
 	if (!attr) {
-		fprintf(stderr, "Can't find attribute %s/%s\n", sdir->path, name);
+		dprintf("Can't find attribute %s/%s\n", sdir->path, name);
 		return;
 	}
 
 	if (strlen(attr->value) < 17) 
-		fprintf(stderr, "Bad format for %s: '%s'\n", name, attr->value);
+		dprintf("Bad format for %s: '%s'\n", name, attr->value);
 	else {
 		const char *cp = attr->value;
 		id->prio[0] = getoctet(cp); cp += 2;
@@ -101,7 +98,7 @@ static void fetch_tv(struct sysfs_directory *sdir, const char *name,
 		= sysfs_get_directory_attribute(sdir, (char *) name);
 
 	if (!attr) {
-		fprintf(stderr, "Can't find attribute %s/%s\n", sdir->path, name);
+		dprintf("Can't find attribute %s/%s\n", sdir->path, name);
 		memset(tv, 0, sizeof(tv));
 		return;
 	}
@@ -117,12 +114,50 @@ static int fetch_int(struct sysfs_directory *sdir, const char *name)
 	int val = 0;
 
 	if (!attr) 
-		fprintf(stderr, "Can't find attribute %s/%s\n", sdir->path, name);
+		dprintf("Can't find attribute %s/%s\n", sdir->path, name);
 	else 
 		val = strtol(attr->value, NULL, 0);
 	return val;
 }
 #endif
+
+/*
+ * Convert device name to an index in the list of ports in bridge.
+ *
+ * Old API does bridge operations as if ports were an array
+ * inside bridge structure.
+ */
+static int get_portno(const char *brname, const char *ifname)
+{
+	int i;
+	int ifindex = if_nametoindex(ifname);
+	int ifindices[MAX_PORTS];
+	unsigned long args[4] = { BRCTL_GET_PORT_LIST,
+				  (unsigned long)ifindices, MAX_PORTS, 0 };
+	struct ifreq ifr;
+
+	if (ifindex <= 0)
+		goto error;
+
+	memset(ifindices, 0, sizeof(ifindices));
+	strncpy(ifr.ifr_name, brname, IFNAMSIZ);
+	ifr.ifr_data = (char *) &args;
+
+	if (ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr) < 0) {
+		dprintf("get_portno: get ports of %s failed: %s\n", 
+			brname, strerror(errno));
+		goto error;
+	}
+
+	for (i = 0; i < MAX_PORTS; i++) {
+		if (ifindices[i] == ifindex)
+			return i;
+	}
+
+	dprintf("%s is not a in bridge %s\n", ifname, brname);
+ error:
+	return -1;
+}
 
 /* get information via ioctl */
 static int old_get_bridge_info(const char *bridge, struct bridge_info *info)
@@ -207,22 +242,31 @@ int br_get_bridge_info(const char *bridge, struct bridge_info *info)
 #endif
 }
 
-static int old_get_port_info(const char *brname, int index,
+static int old_get_port_info(const char *brname, const char *port,
 			     struct port_info *info)
 {
 	struct __port_info i;
-	struct ifreq ifr;
-	unsigned long args[4] = { BRCTL_GET_PORT_INFO,
-				  (unsigned long) &i, index, 0 };
+	int index;
 
 	memset(info, 0, sizeof(*info));
-	strncpy(ifr.ifr_name, brname, IFNAMSIZ);
-	ifr.ifr_data = (char *) &args;
 
-	if (ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		dprintf("old can't get port %s(%d) info %s\n",
-			brname, index, strerror(errno));
+	index = get_portno(brname, port);
+	if (index < 0)
 		return errno;
+	
+	else {
+		struct ifreq ifr;
+		unsigned long args[4] = { BRCTL_GET_PORT_INFO,
+					   (unsigned long) &i, index, 0 };
+	
+		strncpy(ifr.ifr_name, brname, IFNAMSIZ);
+		ifr.ifr_data = (char *) &args;
+		
+		if (ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr) < 0) {
+			dprintf("old can't get port %s(%d) info %s\n",
+				brname, index, strerror(errno));
+			return errno;
+		}
 	}
 
 	memcpy(&info->designated_root, &i.designated_root, 8);
@@ -245,16 +289,17 @@ static int old_get_port_info(const char *brname, int index,
 /*
  * Get information about port on bridge.
  */
-int br_get_port_info(const char *brname, const char *port, int index,
+int br_get_port_info(const char *brname, const char *port, 
 		     struct port_info *info)
 {
 #ifndef HAVE_LIBSYSFS
-	return old_get_port_info(brname, index, info);
+	return old_get_port_info(brname, port, info);
 #else
 	struct sysfs_directory *sdir
 		= bridge_sysfs_directory(port, SYSFS_BRIDGE_PORT_ATTR);
+
 	if (!sdir) 
-		return old_get_port_info(brname, index, info);
+		return old_get_port_info(brname, port, info);
 
 	memset(info, 0, sizeof(*info));
 	fetch_id(sdir, "designated_root", &info->designated_root);
@@ -278,47 +323,6 @@ int br_get_port_info(const char *brname, const char *port, int index,
 #endif
 }
 
-int br_add_interface(const char *bridge, int ifindex)
-{
-	struct ifreq ifr;
-	int err;
-	
-	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
-#ifdef SIOCBRADDIF
-	ifr.ifr_ifindex = ifindex;
-	err = ioctl(br_socket_fd, SIOCBRADDIF, &ifr);
-	if (err < 0)
-#endif
-	{
-		unsigned long args[4] = { BRCTL_ADD_IF, ifindex, 0, 0 };
-					  
-		ifr.ifr_data = (char *) args;
-		err = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
-	}
-
-	return err < 0 ? errno : 0;
-}
-
-int br_del_interface(const char *bridge, int ifindex)
-{
-	struct ifreq ifr;
-	int err;
-	
-	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
-#ifdef SIOCBRDELIF
-	ifr.ifr_ifindex = ifindex;
-	err = ioctl(br_socket_fd, SIOCBRDELIF, &ifr);
-	if (err < 0)
-#endif		
-	{
-		unsigned long args[4] = { BRCTL_DEL_IF, ifindex, 0, 0 };
-					  
-		ifr.ifr_data = (char *) args;
-		err = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
-	}
-
-	return err < 0 ? errno : 0;
-}
 
 static int br_set(const char *bridge, const char *name,
 		  unsigned long value, unsigned long oldcode)
@@ -390,45 +394,6 @@ int br_set_bridge_priority(const char *br, int bridge_priority)
 		      BRCTL_SET_BRIDGE_PRIORITY);
 }
 
-/* sigh.. if_nametoindex busted on older glibc and uclibc */
-static inline unsigned int ifnametoindex(const char* ifname) 
-{
-    struct ifreq ifr;
-
-    strncpy (ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
-
-    return (ioctl(br_socket_fd, SIOCGIFINDEX,&ifr) < 0) ? 0 : ifr.ifr_ifindex;
-}
-
-static int nametoportindex(const char *brname, const char *ifname)
-{
-	int i;
-	int ifindex = ifnametoindex(ifname);
-	int ifindices[MAX_PORTS];
-	unsigned long args[4] = { BRCTL_GET_PORT_LIST,
-				  (unsigned long)ifindices, MAX_PORTS, 0 };
-	struct ifreq ifr;
-
-	if (ifindex <= 0)
-		goto error;
-
-	memset(ifindices, 0, sizeof(ifindices));
-	strncpy(ifr.ifr_name, brname, IFNAMSIZ);
-	ifr.ifr_data = (char *) &args;
-
-	if (ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr) < 0)
-		goto error;
-
-	for (i = 0; i < MAX_PORTS; i++) {
-		if (ifindices[i] == ifindex)
-			return i;
-	}
-
-	dprintf("%s is not a in bridge %s\n", ifname, brname);
- error:
-	return -1;
-}
-
 static int port_set(const char *bridge, const char *ifname, 
 		    const char *name, unsigned long value, 
 		    unsigned long oldcode)
@@ -454,7 +419,7 @@ static int port_set(const char *bridge, const char *ifname,
 		sysfs_close_directory(sdir);
 	} else
 #endif
-	if ( (index = nametoportindex(bridge, ifname)) < 0)
+	if ( (index = get_portno(bridge, ifname)) < 0)
 		ret = index;
 
 	else {
@@ -527,9 +492,12 @@ int br_read_fdb(const char *bridge, struct fdb_entry *fdbs,
 
 	retry:
 		n = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
-		sleep(0);
-		if (n < 0 && errno == EAGAIN && ++retries < 10)
+
+		/* table can change during ioctl processing */
+		if (n < 0 && errno == EAGAIN && ++retries < 10) {
+			sleep(0);
 			goto retry;
+		}
 	}
 
 	for (i = 0; i < n; i++) 

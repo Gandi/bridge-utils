@@ -82,7 +82,7 @@ static int new_foreach_bridge(int (*iterator)(const char *name, void *),
 
 	devlist = sysfs_get_class_devices(br_class_net);
 	if (!devlist) {
-		fprintf(stderr, "Can't read devices from sysfs\n");
+		dprintf("Can't read devices from sysfs\n");
 		return -errno;
 	}
 
@@ -98,18 +98,6 @@ static int new_foreach_bridge(int (*iterator)(const char *name, void *),
 }
 #endif
 
-/* once again, if_indextoname busted on older glibc and uclibc */
-static inline char * ifindextoname (unsigned int ifindex, char *ifname)
-{
-	struct ifreq ifr;
-
-	ifr.ifr_ifindex = ifindex;
-	if ( ioctl(br_socket_fd, SIOCGIFNAME, &ifr) < 0) 
-		return NULL;
-
-	return strncpy(ifname, ifr.ifr_name, IFNAMSIZ);
-}
-
 /*
  * Old interface uses ioctl
  */
@@ -124,14 +112,14 @@ static int old_foreach_bridge(int (*iterator)(const char *, void *),
 
 	num = ioctl(br_socket_fd, SIOCGIFBR, args);
 	if (num < 0) {
-		fprintf(stderr, "Get bridge indices failed: %s\n",
+		dprintf("Get bridge indices failed: %s\n",
 			strerror(errno));
 		return -errno;
 	}
 
 	for (i = 0; i < num; i++) {
-		if (!ifindextoname(ifindices[i], ifname)) {
-			fprintf(stderr, "get find name for ifindex %d\n",
+		if (!if_indextoname(ifindices[i], ifname)) {
+			dprintf("get find name for ifindex %d\n",
 				ifindices[i]);
 			return -errno;
 		}
@@ -167,11 +155,10 @@ int br_foreach_bridge(int (*iterator)(const char *, void *),
 /* 
  * Only used if sysfs is not available.
  */
-static int  old_foreach_port(const char *brname,
-			     int (*iterator)(const char *br,
-					     const char *port, int ind,
-					     void *arg),
-			     void *arg)
+static int old_foreach_port(const char *brname,
+			    int (*iterator)(const char *br, const char *port, 
+					    void *arg),
+			    void *arg)
 {
 	int i, err, count;
 	struct ifreq ifr;
@@ -186,7 +173,7 @@ static int  old_foreach_port(const char *brname,
 
 	err = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
 	if (err < 0) {
-		fprintf(stderr, "list ports for bridge:'%s' failed: %s\n",
+		dprintf("list ports for bridge:'%s' failed: %s\n",
 			brname, strerror(errno));
 		return -errno;
 	}
@@ -195,33 +182,29 @@ static int  old_foreach_port(const char *brname,
 	for (i = 0; i < MAX_PORTS; i++) {
 		if (!ifindices[i])
 			continue;
-		if (!ifindextoname(ifindices[i], ifname)) {
-			fprintf(stderr, "can't find name for ifindex:%d\n",
+
+		if (!if_indextoname(ifindices[i], ifname)) {
+			dprintf("can't find name for ifindex:%d\n",
 				ifindices[i]);
 			continue;
 		}
 
 		++count;
-		if (iterator(brname, ifname, i, arg))
+		if (iterator(brname, ifname, arg))
 			break;
 	}
 
 	return count;
 }
 	
-
-
 /*
  * Iterate over all ports in bridge (using sysfs).
  */
 int br_foreach_port(const char *brname,
-		    int (*iterator)(const char *br, const char *port,
-				    int ind, void *arg),
+		    int (*iterator)(const char *br, const char *port, void *arg),
 		    void *arg)
 {
-#ifndef HAVE_LIBSYSFS
-	return old_foreach_port(brname, iterator, arg);
-#else
+#ifdef HAVE_LIBSYSFS
 	struct sysfs_class_device *dev;
 	struct sysfs_directory *dir;
 	struct sysfs_link *plink;
@@ -231,7 +214,7 @@ int br_foreach_port(const char *brname,
 
 	if (!br_class_net ||
 	    !(dev = sysfs_get_class_device(br_class_net, (char *) brname)))
-		return -ENODEV;
+		goto old;
 
 	snprintf(path, sizeof(path), "%s/%s", 
 		 dev->path, SYSFS_BRIDGE_PORT_SUBDIR);
@@ -242,26 +225,27 @@ int br_foreach_port(const char *brname,
 		/* no /sys/class/net/ethX/brif subdirectory
 		 * either: old kernel, or not really a bridge
 		 */
-		err = old_foreach_port(brname, iterator, arg);
-		goto out1;
+		goto old;
 	}
 
 	links = sysfs_get_dir_links(dir);
 	if (!links) {
 		err = -ENOSYS;
-		goto out2;
+		goto out;
 	}
 
 	err = 0;
 	dlist_for_each_data(links, plink, struct sysfs_link) {
 		++err;
-		if (iterator(brname, plink->name, err, arg))
+		if (iterator(brname, plink->name, arg))
 			break;
-
 	}
- out2:
+ out:
 	sysfs_close_directory(dir);
- out1:
 	return err;
+
+ old:
 #endif
+	return old_foreach_port(brname, iterator, arg);
+	
 }

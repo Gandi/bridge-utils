@@ -82,16 +82,13 @@ static int br_cmd_delbr(char** argv)
 static int br_cmd_addif(char** argv)
 {
 	int err;
-	int ifindex = if_nametoindex(argv[2]);
 
-	if (!ifindex) {
-		fprintf(stderr, "interface %s does not exist!\n", argv[2]);
-		return 1;
-	}
-
-	switch (err = br_add_interface(argv[1], ifindex)) {
+	switch (err = br_add_interface(argv[1], argv[2])) {
 	case 0:
 		return 0;
+	case ENODEV:
+		fprintf(stderr, "interface %s does not exist!\n", argv[2]);
+		return 1;
 
 	case EBUSY:
 		fprintf(stderr,	"device %s is already a member of a bridge; "
@@ -115,16 +112,13 @@ static int br_cmd_addif(char** argv)
 static int br_cmd_delif(char** argv)
 {
 	int err;
-	int ifindex = if_nametoindex(argv[2]);
 
-	if (!ifindex) {
-		fprintf(stderr, "interface %s does not exist!\n", argv[2]);
-		return 1;
-	}
-
-	switch (err = br_del_interface(argv[1], ifindex)) {
+	switch (err = br_del_interface(argv[1], argv[2])) {
 	case 0:
 		return 0;
+	case ENODEV:
+		fprintf(stderr, "interface %s does not exist!\n", argv[2]);
+		return 1;
 
 	case EINVAL:
 		fprintf(stderr, "device %s is not a slave of %s\n",

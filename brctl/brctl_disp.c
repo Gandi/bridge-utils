@@ -37,7 +37,7 @@ void br_show_timer(const struct timeval *tv)
 
 static int first;
 
-static int dump_interface(const char *b, const char *p, int ind, void *arg)
+static int dump_interface(const char *b, const char *p, void *arg)
 {
 
 	if (first) 
@@ -62,12 +62,12 @@ void br_dump_interface_list(const char *br)
 		printf("\n");
 }
 
-static int dump_port_info(const char *br, const char *p,  int count, void *arg)
+static int dump_port_info(const char *br, const char *p,  void *arg)
 {
 	struct port_info pinfo;
 
-	printf("%s (%i)", p, count);
-	if (br_get_port_info(br, p, count, &pinfo)) {
+	printf("%s", p);
+	if (br_get_port_info(br, p, &pinfo)) {
 		printf("\tcan't get port info\n");
 		return 1;
 	}
