@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/fcntl.h>
+#include <linux/sockios.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
@@ -40,14 +41,15 @@ int br_device_ioctl(const struct bridge *br, unsigned long arg0,
 
 	strncpy(ifr.ifr_name, br->ifname, IFNAMSIZ);
 	((unsigned long *)(&ifr.ifr_data))[0] = (unsigned long)args;
+
 #ifdef SIOCBRDEV
+	/* New interface which allows 32bit/64 bit compatiability to work. */
 	{ int err = ioctl(br_socket_fd, SIOCBRDEV, &ifr);
 	  if (err >= 0)
 		return err;
 	}
-#else
-#warn SIOCBRDEV not defined
 #endif
+	/* Old fall back */
 	return ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
 }
 
