@@ -288,6 +288,11 @@ void br_cmd_showmacs(struct bridge *br, char *arg0, char *arg1)
 		int num;
 
 		num = br_read_fdb(br, fdb, offset, 1024);
+		if (num < 0) {
+			fprintf(stderr, "read of forward table failed\n");
+			break;
+		}
+
 		if (!num)
 			break;
 
