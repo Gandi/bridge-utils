@@ -1,11 +1,11 @@
 Summary: Utilities for configuring the linux ethernet bridge.
 Name: bridge-utils
 Version: 0.9.3
-Release: 1
+Release: 2
 Copyright: GPL
-Group: Applications/System
+Group: System Environment/Base
 Source0: http://bridge.sourceforge.net/bridge-utils/bridge-utils-%{PACKAGE_VERSION}.tar.gz
-BuildRoot: /var/tmp/%{name}-root
+BuildRoot: /var/tmp/%{name}-%{version}-root
 
 %description
 This package contains utilities for configuring the linux ethernet
@@ -38,29 +38,33 @@ will use the linux ethernet bridge interface library.
 make
 
 %install
-rm -rf $RPM_BUILD_ROOT
+[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 mkdir -p ${RPM_BUILD_ROOT}
-mkdir -p ${RPM_BUILD_ROOT}/sbin
-mkdir -p ${RPM_BUILD_ROOT}/usr/include
-mkdir -p ${RPM_BUILD_ROOT}/usr/lib
-mkdir -p ${RPM_BUILD_ROOT}/usr/man/man8
-mkdir -p ${RPM_BUILD_ROOT}/usr/sbin
-strip brctl/brctl
-cp brctl/brctl ${RPM_BUILD_ROOT}/sbin
-cp doc/brctl.8 ${RPM_BUILD_ROOT}/usr/man/man8
-cp libbridge/libbridge.h ${RPM_BUILD_ROOT}/usr/include
-cp libbridge/libbridge.a ${RPM_BUILD_ROOT}/usr/lib
+mkdir -p ${RPM_BUILD_ROOT}%{_sbindir}
+mkdir -p ${RPM_BUILD_ROOT}%{_includedir}
+mkdir -p ${RPM_BUILD_ROOT}%{_libdir}
+mkdir -p ${RPM_BUILD_ROOT}%{_mandir}/man8
+install -m 0755 brctl/brctl ${RPM_BUILD_ROOT}/%{_sbindir}
+gzip doc/brctl.8
+install -m 0644  doc/brctl.8.gz ${RPM_BUILD_ROOT}%{_mandir}/man8
+install -m 0644 libbridge/libbridge.h ${RPM_BUILD_ROOT}%{_includedir}
+install -m 0644 libbridge/libbridge.a ${RPM_BUILD_ROOT}%{_libdir}/
 
 %clean
-rm -rf ${RPM_BUILD_ROOT}
+[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr (-,root,root)
-%doc AUTHORS COPYING doc/FAQ doc/FIREWALL doc/HOWTO doc/RPM-GPG-KEY
-/sbin/brctl
-/usr/man/man8/brctl.8.gz
+%doc AUTHORS COPYING doc/FAQ doc/HOWTO doc/RPM-GPG-KEY
+%{_sbindir}/brctl
+%{_mandir}/man8/brctl.8.gz
 
 %files -n bridge-utils-devel
 %defattr (-,root,root)
-/usr/include/libbridge.h
-/usr/lib/libbridge.a
+%{_includedir}/libbridge.h
+%{_libdir}/libbridge.a
+
+%changelog
+* Wed Nov 07 2001 Matthew Galgoci <mgalgoci@redhat.com>
+- initial cleanup of spec file from net release
+
