@@ -25,7 +25,8 @@ brctld_OBJECTS= $(brctld_SOURCES:.c=.o)
 
 OBJECTS= $(common_OBJECTS) $(brctl_OBJECTS) $(brctld_OBJECTS)
 
-PROGRAMS= brctl brctld
+# brctld is for debug only, not production use
+PROGRAMS= brctl 
 
 
 all:	$(PROGRAMS)

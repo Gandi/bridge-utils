@@ -64,7 +64,6 @@ struct bridge
 	int ifindex;
 	char ifname[IFNAMSIZ];
 	struct port *firstport;
-	struct port *ports[256];
 	struct bridge_info info;
 };
 
@@ -95,7 +94,6 @@ struct port_info
 struct port
 {
 	struct port *next;
-
 	int index;
 	int ifindex;
 	struct bridge *parent;
@@ -106,10 +104,11 @@ extern struct bridge *bridge_list;
 
 int br_init(void);
 int br_refresh(void);
-struct bridge *br_find_bridge(char *brname);
-struct port *br_find_port(struct bridge *br, char *portname);
-char *br_get_state_name(int state);
+struct bridge *br_find_bridge(const char *brname);
+struct port *br_find_port(struct bridge *br, const char *portname);
+const char *br_get_state_name(int state);
 
+int br_get_version(void);
 int br_add_bridge(const char *brname);
 int br_del_bridge(const char *brname);
 int br_add_interface(struct bridge *br, int ifindex);

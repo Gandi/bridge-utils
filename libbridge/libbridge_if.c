@@ -27,7 +27,7 @@
 #include "libbridge.h"
 #include "libbridge_private.h"
 
-static int br_ioctl32(unsigned long arg0, unsigned long arg1, unsigned long arg2)
+int br_get_br(unsigned long arg0, unsigned long arg1, unsigned long arg2)
 {
 	unsigned long arg[3];
 
@@ -38,54 +38,28 @@ static int br_ioctl32(unsigned long arg0, unsigned long arg1, unsigned long arg2
 	return ioctl(br_socket_fd, SIOCGIFBR, arg);
 }
 
-#ifdef __sparc__
-static int br_ioctl64(unsigned long arg0, unsigned long arg1, unsigned long arg2)
+int br_set_br(unsigned long arg0, unsigned long arg1, unsigned long arg2)
 {
-	unsigned long long arg[3];
+	unsigned long arg[3];
 
 	arg[0] = arg0;
 	arg[1] = arg1;
 	arg[2] = arg2;
 
-	return ioctl(br_socket_fd, SIOCGIFBR, arg);
-}
-
-int __kernel_is_64_bit()
-{
-	static int kernel_is_64_bit = -1;
-
-	if (kernel_is_64_bit == -1) {
-		struct utsname buf;
-
-		uname(&buf);
-		kernel_is_64_bit = !strcmp(buf.machine, "sparc64");
-	}
-
-	return kernel_is_64_bit;
-}
-#endif
-
-int br_ioctl(unsigned long arg0, unsigned long arg1, unsigned long arg2)
-{
-#ifdef __sparc__
-	if (__kernel_is_64_bit())
-		return br_ioctl64(arg0, arg1, arg2);
-#endif
-
-	return br_ioctl32(arg0, arg1, arg2);
+	return ioctl(br_socket_fd, SIOCSIFBR, arg);
 }
 
 int br_get_version(void)
 {
-	return br_ioctl(BRCTL_GET_VERSION, 0, 0);
+	return br_get_br(BRCTL_GET_VERSION, 0, 0);
 }
 
 int br_add_bridge(const char *brname)
 {
 	char _br[IFNAMSIZ];
 
-	memcpy(_br, brname, IFNAMSIZ);
-	if (br_ioctl(BRCTL_ADD_BRIDGE, (unsigned long)_br, 0) < 0)
+	strncpy(_br, brname, IFNAMSIZ);
+	if (br_set_br(BRCTL_ADD_BRIDGE, (unsigned long)_br, 0) < 0)
 		return errno;
 
 	return 0;
@@ -95,8 +69,8 @@ int br_del_bridge(const char *brname)
 {
 	char _br[IFNAMSIZ];
 
-	memcpy(_br, brname, IFNAMSIZ);
-	if (br_ioctl(BRCTL_DEL_BRIDGE, (unsigned long)_br, 0) < 0)
+	strncpy(_br, brname, IFNAMSIZ);
+	if (br_set_br(BRCTL_DEL_BRIDGE, (unsigned long)_br, 0) < 0)
 		return errno;
 
 	return 0;

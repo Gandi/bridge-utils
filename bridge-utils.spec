@@ -1,6 +1,6 @@
 Summary: Utilities for configuring the linux ethernet bridge.
 Name: bridge-utils
-Version: 0.9.6
+Version: 0.9.7
 Release: 1
 Copyright: GPL
 Group: System Environment/Base

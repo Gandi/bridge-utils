@@ -26,10 +26,14 @@
 #include "libbridge.h"
 #include "libbridge_private.h"
 
+#define MAX_BRIDGES	1024	/* arbitrary */
+#define MAX_PORTS	256	/* STP limitation */
+
 int br_socket_fd;
 struct bridge *bridge_list;
 
-static void __bridge_info_copy(struct bridge_info *info, struct __bridge_info *i)
+static void __bridge_info_copy(struct bridge_info *info, 
+			       const struct __bridge_info *i)
 {
 	memcpy(&info->designated_root, &i->designated_root, 8);
 	memcpy(&info->bridge_id, &i->bridge_id, 8);
@@ -53,7 +57,8 @@ static void __bridge_info_copy(struct bridge_info *info, struct __bridge_info *i
 	__jiffies_to_tv(&info->gc_timer_value, i->gc_timer_value);
 }
 
-static void __port_info_copy(struct port_info *info, struct __port_info *i)
+static void __port_info_copy(struct port_info *info, 
+			     const struct __port_info *i)
 {
 	memcpy(&info->designated_root, &i->designated_root, 8);
 	memcpy(&info->designated_bridge, &i->designated_bridge, 8);
@@ -77,12 +82,16 @@ static int br_read_info(struct bridge *br)
 	struct __bridge_info i;
 
 	if (if_indextoname(br->ifindex, br->ifname) == NULL) {
-		return ENODEV;
+		/* index was there, but now it is gone! */
+		return -1;
 	}
 
 	if (br_device_ioctl(br, BRCTL_GET_BRIDGE_INFO,
-			    (unsigned long)&i, 0, 0) < 0)
+			    (unsigned long)&i, 0, 0) < 0) {
+		fprintf(stderr, "%s: can't get info %s\n",
+			br->ifname, strerror(errno));
 		return errno;
+	}
 
 	__bridge_info_copy(&br->info, &i);
 	return 0;
@@ -93,52 +102,58 @@ static int br_read_port_info(struct port *p)
 	struct __port_info i;
 
 	if (br_device_ioctl(p->parent, BRCTL_GET_PORT_INFO,
-			    (unsigned long)&i, p->index, 0) < 0)
+			    (unsigned long)&i, p->index, 0) < 0) {
+		fprintf(stderr, "%s: can't get port %d info %s\n",
+			p->parent->ifname, p->index, strerror(errno));
 		return errno;
+	}
 
 	__port_info_copy(&p->info, &i);
 	return 0;
 }
 
-void br_nuke_bridge(struct bridge *b)
+static void br_nuke_bridge(struct bridge *b)
 {
-	struct port *p;
+	struct port *p, *n;
 
-	p = b->firstport;
-	while (p != NULL) {
-		struct port *pnext;
-
-		pnext = p->next;
+	for (p = b->firstport; p; p = n) {
+		n = p->next;
 		free(p);
-		p = pnext;
 	}
 
 	free(b);
 }
 
-int br_make_port_list(struct bridge *br)
+static int br_make_port_list(struct bridge *br)
 {
 	int err;
 	int i;
-	int ifindices[256];
+	int ifindices[MAX_PORTS];
+	struct port *p, **top;
 
+	memset(ifindices, 0, sizeof(ifindices));
 	if (br_device_ioctl(br, BRCTL_GET_PORT_LIST, (unsigned long)ifindices,
-			    0, 0) < 0)
+			    MAX_PORTS, 0) < 0)
 		return errno;
 
-	for (i=255;i>=0;i--) {
-		struct port *p;
-
+	top = &br->firstport;
+	for (i = 0; i < MAX_PORTS; i++) {
 		if (!ifindices[i])
 			continue;
 
 		p = malloc(sizeof(struct port));
-		p->index = i;
+		if (!p) {
+			err = -ENOMEM;
+			goto error_out;
+		}
+
+		p->next = NULL;
 		p->ifindex = ifindices[i];
 		p->parent = br;
-		br->ports[i] = p;
-		p->next = br->firstport;
-		br->firstport = p;
+		p->index = i;
+		*top = p;
+		top = &p->next;
+
 		if ((err = br_read_port_info(p)) != 0)
 			goto error_out;
 	}
@@ -146,36 +161,46 @@ int br_make_port_list(struct bridge *br)
 	return 0;
 
  error_out:
-	while (++i < 256)
-		free(br->ports[i]);
+	p = br->firstport;
+	while (p) {
+		struct port *n = p->next;
+		free(p);
+		p = n;
+	}
+	br->firstport = NULL;
 
 	return err;
 }
 
-int br_make_bridge_list()
+static int br_make_bridge_list(void)
 {
-	int i;
-	int ifindices[32];
-	int num;
+	int i, num;
+	int ifindices[MAX_BRIDGES];
 
-	num = br_ioctl(BRCTL_GET_BRIDGES, (unsigned long)ifindices, 32);
-	if (num < 0)
+	num = br_get_br(BRCTL_GET_BRIDGES, (unsigned long)ifindices, 
+			MAX_BRIDGES);
+	if (num < 0) {
+		fprintf(stderr, "Get bridge indices failed: %s\n",
+			strerror(errno));
 		return errno;
-
+	}
 	bridge_list = NULL;
-	for (i=0;i<num;i++) {
+	for (i = 0;i < num; i++) {
 		struct bridge *br;
 
 		br = malloc(sizeof(struct bridge));
+		if (!br)
+			return -ENOMEM;
+
 		memset(br, 0, sizeof(struct bridge));
 		br->ifindex = ifindices[i];
 		br->firstport = NULL;
-		if ( br_read_info(br) != 0 ||
-		     br_make_port_list(br) != 0) {
+		if ( br_read_info(br) || br_make_port_list(br)) {
 			/* ignore the problem could just be a race! */
 			free(br);
 			continue;
 		}
+
 		br->next = bridge_list;
 		bridge_list = br;
 	}
@@ -190,8 +215,10 @@ int br_init()
 	if ((br_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return errno;
 
-	if (br_get_version() != BRCTL_VERSION)
-		return 12345;
+	if (br_get_version() != BRCTL_VERSION) {
+		fprintf(stderr, "bridge utilities not compatiable with kernel version\n");
+		exit(1);
+	}
 
 	if ((err = br_make_bridge_list()) != 0)
 		return err;
@@ -211,7 +238,6 @@ int br_refresh()
 		br_nuke_bridge(b);
 		b = bnext;
 	}
-	bridge_list = NULL;
 
 	return br_make_bridge_list();
 }

@@ -28,10 +28,10 @@ struct command
 };
 
 struct command *br_command_lookup(char *cmd);
-void br_dump_bridge_id(unsigned char *x);
-void br_show_timer(struct timeval *tv);
-void br_dump_interface_list(struct bridge *br);
-void br_dump_port_info(struct port *p);
-void br_dump_info(struct bridge *br);
+void br_dump_bridge_id(const unsigned char *x);
+void br_show_timer(const struct timeval *tv);
+void br_dump_interface_list(const struct bridge *br);
+void br_dump_port_info(const struct port *p);
+void br_dump_info(const struct bridge *br);
 
 #endif

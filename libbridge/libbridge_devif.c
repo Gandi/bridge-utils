@@ -26,7 +26,7 @@
 #include "libbridge.h"
 #include "libbridge_private.h"
 
-int br_device_ioctl32(struct bridge *br, unsigned long arg0, unsigned long arg1, unsigned long arg2, unsigned long arg3)
+int br_device_ioctl(struct bridge *br, unsigned long arg0, unsigned long arg1, unsigned long arg2, unsigned long arg3)
 {
 	unsigned long args[4];
 	struct ifreq ifr;
@@ -36,38 +36,10 @@ int br_device_ioctl32(struct bridge *br, unsigned long arg0, unsigned long arg1,
 	args[2] = arg2;
 	args[3] = arg3;
 
-	memcpy(ifr.ifr_name, br->ifname, IFNAMSIZ);
+	strncpy(ifr.ifr_name, br->ifname, IFNAMSIZ);
 	((unsigned long *)(&ifr.ifr_data))[0] = (unsigned long)args;
 
 	return ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
-}
-
-#ifdef __sparc__
-int br_device_ioctl64(struct bridge *br, unsigned long arg0, unsigned long arg1, unsigned long arg2, unsigned long arg3)
-{
-	unsigned long long args[4];
-	struct ifreq ifr;
-
-	args[0] = arg0;
-	args[1] = arg1;
-	args[2] = arg2;
-	args[3] = arg3;
-
-	memcpy(ifr.ifr_name, br->ifname, IFNAMSIZ);
-	((unsigned long long *)(&ifr.ifr_data))[0] = (unsigned long long)(unsigned long)args;
-
-	return ioctl(br_socket_fd, SIOCDEVPRIVATE + 3, &ifr);
-}
-#endif
-
-int br_device_ioctl(struct bridge *br, unsigned long arg0, unsigned long arg1, unsigned long arg2, unsigned long arg3)
-{
-#ifdef __sparc__
-	if (__kernel_is_64_bit())
-		return br_device_ioctl64(br, arg0, arg1, arg2, arg3);
-#endif
-
-	return br_device_ioctl32(br, arg0, arg1, arg2, arg3);
 }
 
 int br_add_interface(struct bridge *br, int ifindex)
@@ -173,7 +145,7 @@ int br_set_path_cost(struct port *p, int path_cost)
 	return 0;
 }
 
-void __copy_fdb(struct fdb_entry *ent, struct __fdb_entry *f)
+static void __copy_fdb(struct fdb_entry *ent, const struct __fdb_entry *f)
 {
 	memcpy(ent->mac_addr, f->mac_addr, 6);
 	ent->port_no = f->port_no;

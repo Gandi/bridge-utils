@@ -42,9 +42,10 @@ void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies)
 	tv->tv_usec = tvusec - 1000000 * tv->tv_sec;
 }
 
-static char *state_names[5] = {"disabled", "listening", "learning", "forwarding", "blocking"};
+static const char *state_names[5] 
+= {"disabled", "listening", "learning", "forwarding", "blocking"};
 
-char *br_get_state_name(int state)
+const char *br_get_state_name(int state)
 {
 	if (state >= 0 && state <= 4)
 		return state_names[state];
@@ -52,7 +53,7 @@ char *br_get_state_name(int state)
 	return "<INVALID STATE>";
 }
 
-struct bridge *br_find_bridge(char *brname)
+struct bridge *br_find_bridge(const char *brname)
 {
 	struct bridge *b;
 
@@ -67,20 +68,19 @@ struct bridge *br_find_bridge(char *brname)
 	return NULL;
 }
 
-struct port *br_find_port(struct bridge *br, char *portname)
+
+struct port *br_find_port(struct bridge *br, const char *portname)
 {
-	char index;
+	int index;
 	struct port *p;
 
-	if (!(index = if_nametoindex(portname)))
+	index = if_nametoindex(portname);
+	if (index <= 0) 
 		return NULL;
 
-	p = br->firstport;
-	while (p != NULL) {
+	for (p = br->firstport; p; p = p->next) {
 		if (p->ifindex == index)
 			return p;
-
-		p = p->next;
 	}
 
 	return NULL;

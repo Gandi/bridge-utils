@@ -19,12 +19,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
-#include <asm/param.h>
+#include <sys/errno.h>
 #include "libbridge.h"
 #include "brctl.h"
 
-char *help_message =
+const char *version = "0.9.7";
+
+const char *help_message =
 "commands:\n"
 "\taddbr\t\t<bridge>\t\tadd bridge\n"
 "\taddif\t\t<bridge> <device>\tadd interface to bridge\n"
@@ -37,7 +38,6 @@ char *help_message =
 "\tsetageing\t<bridge> <time>\t\tset ageing time\n"
 "\tsetbridgeprio\t<bridge> <prio>\t\tset bridge priority\n"
 "\tsetfd\t\t<bridge> <time>\t\tset bridge forward delay\n"
-"\tsetgcint\t<bridge> <time>\t\tset garbage collection interval\n"
 "\tsethello\t<bridge> <time>\t\tset hello time\n"
 "\tsetmaxage\t<bridge> <time>\t\tset max message age\n"
 "\tsetpathcost\t<bridge> <port> <cost>\tset path cost\n"
@@ -55,10 +55,19 @@ int main(int argc, char *argv[])
 	struct bridge *br;
 	struct command *cmd;
 
-	br_init();
-
 	if (argc < 2)
 		goto help;
+
+	if (strcmp(argv[1], "-V") == 0) {
+		fprintf(stderr, "bridge-utils %s\n", version);
+		return 0;
+	}
+
+	if (br_init()) {
+		fprintf(stderr, "can't setup bridge control: %s\n",
+			strerror(errno));
+		return 1;
+	}
 
 	if ((cmd = br_command_lookup(argv[1])) == NULL) {
 		fprintf(stderr, "never heard of command [%s]\n", argv[1]);
@@ -74,9 +83,9 @@ int main(int argc, char *argv[])
 		}
 
 		br = br_find_bridge(argv[argindex]);
-
+	
 		if (br == NULL) {
-			fprintf(stderr, "bridge %s doesn't exist!\n", argv[argindex]);
+			fprintf(stderr, "bridge %s doesn't exist?\n", argv[argindex]);
 			return 1;
 		}
 
