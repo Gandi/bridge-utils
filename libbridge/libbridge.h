@@ -38,19 +38,18 @@ struct bridge_info
 {
 	struct bridge_id designated_root;
 	struct bridge_id bridge_id;
-	int root_path_cost;
+	unsigned root_path_cost;
 	struct timeval max_age;
 	struct timeval hello_time;
 	struct timeval forward_delay;
 	struct timeval bridge_max_age;
 	struct timeval bridge_hello_time;
 	struct timeval bridge_forward_delay;
-	unsigned topology_change:1;
-	unsigned topology_change_detected:1;
-	int root_port;
-	unsigned stp_enabled:1;
+	u_int16_t root_port;
+	unsigned char stp_enabled;
+	unsigned char topology_change;
+	unsigned char topology_change_detected;
 	struct timeval ageing_time;
-	struct timeval gc_interval;
 	struct timeval hello_timer_value;
 	struct timeval tcn_timer_value;
 	struct timeval topology_change_timer_value;
@@ -64,14 +63,13 @@ struct bridge
 	int ifindex;
 	char ifname[IFNAMSIZ];
 	struct port *firstport;
-	struct bridge_info info;
 };
 
 struct fdb_entry
 {
 	u_int8_t mac_addr[6];
-	int port_no;
-	unsigned is_local:1;
+	u_int16_t port_no;
+	unsigned char is_local;
 	struct timeval ageing_timer_value;
 };
 
@@ -81,11 +79,12 @@ struct port_info
 	struct bridge_id designated_bridge;
 	u_int16_t port_id;
 	u_int16_t designated_port;
-	int path_cost;
-	int designated_cost;
-	int state;
-	unsigned top_change_ack:1;
-	unsigned config_pending:1;
+	u_int8_t priority;
+	unsigned char top_change_ack;
+	unsigned char config_pending;
+	unsigned char state;
+	unsigned path_cost;
+	unsigned designated_cost;
 	struct timeval message_age_timer_value;
 	struct timeval forward_delay_timer_value;
 	struct timeval hold_timer_value;
@@ -97,7 +96,6 @@ struct port
 	int index;
 	int ifindex;
 	struct bridge *parent;
-	struct port_info info;
 };
 
 extern struct bridge *bridge_list;
@@ -108,6 +106,8 @@ struct bridge *br_find_bridge(const char *brname);
 struct port *br_find_port(struct bridge *br, const char *portname);
 const char *br_get_state_name(int state);
 
+int br_get_bridge_info(const struct bridge *br, struct bridge_info *);
+int br_get_port_info(const struct port *port, struct port_info *);
 int br_get_version(void);
 int br_add_bridge(const char *brname);
 int br_del_bridge(const char *brname);
@@ -123,9 +123,4 @@ int br_set_bridge_priority(struct bridge *br, int bridge_priority);
 int br_set_port_priority(struct port *p, int port_priority);
 int br_set_path_cost(struct port *p, int path_cost);
 int br_read_fdb(struct bridge *br, struct fdb_entry *fdbs, int offset, int num);
-
-/* libc5 combatability */
-char *if_indextoname(unsigned int __ifindex, char *__ifname);
-unsigned int if_nametoindex(const char *__ifname);
-
 #endif

@@ -32,6 +32,7 @@ void br_dump_bridge_id(const unsigned char *x);
 void br_show_timer(const struct timeval *tv);
 void br_dump_interface_list(const struct bridge *br);
 void br_dump_port_info(const struct port *p);
-void br_dump_info(const struct bridge *br);
+void br_dump_info(const struct bridge *br,
+		  const struct bridge_info *bri);
 
 #endif

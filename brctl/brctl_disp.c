@@ -54,42 +54,42 @@ void br_dump_interface_list(const struct bridge *br)
 void br_dump_port_info(const struct port *p)
 {
 	char ifname[IFNAMSIZ];
-	const struct port_info *pi;
-
-	pi = &p->info;
+	struct port_info pinfo;
 
 	printf("%s (%i)\n", if_indextoname(p->ifindex, ifname), p->index);
-	printf(" port id\t\t%.4x\t\t\t", pi->port_id);
-	printf("state\t\t\t%s\n", br_get_state_name(pi->state));
+	if (br_get_port_info(p, &pinfo)) {
+		printf(" can't get port info\n");
+		return;
+	}
+
+	printf(" port id\t\t%.4x\t\t\t", pinfo.port_id);
+	printf("state\t\t\t%s\n", br_get_state_name(pinfo.state));
 	printf(" designated root\t");
-	br_dump_bridge_id((unsigned char *)&pi->designated_root);
-	printf("\tpath cost\t\t%4i\n", pi->path_cost);
+	br_dump_bridge_id((unsigned char *)&pinfo.designated_root);
+	printf("\tpath cost\t\t%4i\n", pinfo.path_cost);
 
 	printf(" designated bridge\t");
-	br_dump_bridge_id((unsigned char *)&pi->designated_bridge);
+	br_dump_bridge_id((unsigned char *)&pinfo.designated_bridge);
 	printf("\tmessage age timer\t");
-	br_show_timer(&pi->message_age_timer_value);
-	printf("\n designated port\t%.4x", pi->designated_port);
+	br_show_timer(&pinfo.message_age_timer_value);
+	printf("\n designated port\t%.4x", pinfo.designated_port);
 	printf("\t\t\tforward delay timer\t");
-	br_show_timer(&pi->forward_delay_timer_value);
-	printf("\n designated cost\t%4i", pi->designated_cost);
+	br_show_timer(&pinfo.forward_delay_timer_value);
+	printf("\n designated cost\t%4i", pinfo.designated_cost);
 	printf("\t\t\thold timer\t\t");
-	br_show_timer(&pi->hold_timer_value);
+	br_show_timer(&pinfo.hold_timer_value);
 	printf("\n flags\t\t\t");
-	if (pi->config_pending)
+	if (pinfo.config_pending)
 		printf("CONFIG_PENDING ");
-	if (pi->top_change_ack)
+	if (pinfo.top_change_ack)
 		printf("TOPOLOGY_CHANGE_ACK ");
 	printf("\n");
 	printf("\n");
 }
 
-void br_dump_info(const struct bridge *br)
+void br_dump_info(const struct bridge *br, const struct bridge_info *bri)
 {
-	const struct bridge_info *bri;
 	const struct port *p;
-
-	bri = &br->info;
 
 	printf("%s\n", br->ifname);
 	if (!bri->stp_enabled) {
@@ -117,8 +117,6 @@ void br_dump_info(const struct bridge *br)
 	br_show_timer(&bri->bridge_forward_delay);
 	printf("\n ageing time\t\t");
 	br_show_timer(&bri->ageing_time);
-	printf("\t\t\tgc interval\t\t");
-	br_show_timer(&bri->gc_interval);
 	printf("\n hello timer\t\t");
 	br_show_timer(&bri->hello_timer_value);
 	printf("\t\t\ttcn timer\t\t");

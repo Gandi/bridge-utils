@@ -26,7 +26,8 @@
 #include "libbridge.h"
 #include "libbridge_private.h"
 
-int br_device_ioctl(struct bridge *br, unsigned long arg0, unsigned long arg1, unsigned long arg2, unsigned long arg3)
+int br_device_ioctl(const struct bridge *br, unsigned long arg0, 
+		    unsigned long arg1, unsigned long arg2, unsigned long arg3)
 {
 	unsigned long args[4];
 	struct ifreq ifr;
@@ -40,6 +41,56 @@ int br_device_ioctl(struct bridge *br, unsigned long arg0, unsigned long arg1, u
 	((unsigned long *)(&ifr.ifr_data))[0] = (unsigned long)args;
 
 	return ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
+}
+
+int br_get_bridge_info(const struct bridge *br, struct bridge_info *info)
+{
+	struct __bridge_info i;
+
+	if (br_device_ioctl(br, BRCTL_GET_BRIDGE_INFO, 
+			    (unsigned long )&i, 0, 0) < 0) {
+		return errno;
+	}
+
+	memcpy(&info->designated_root, &i.designated_root, 8);
+	memcpy(&info->bridge_id, &i.bridge_id, 8);
+	info->root_path_cost = i.root_path_cost;
+	info->root_port = i.root_port;
+	info->topology_change = i.topology_change;
+	info->topology_change_detected = i.topology_change_detected;
+	info->stp_enabled = i.stp_enabled;
+	__jiffies_to_tv(&info->max_age, i.max_age);
+	__jiffies_to_tv(&info->hello_time, i.hello_time);
+	__jiffies_to_tv(&info->forward_delay, i.forward_delay);
+	__jiffies_to_tv(&info->bridge_max_age, i.bridge_max_age);
+	__jiffies_to_tv(&info->bridge_hello_time, i.bridge_hello_time);
+	__jiffies_to_tv(&info->bridge_forward_delay, i.bridge_forward_delay);
+	__jiffies_to_tv(&info->ageing_time, i.ageing_time);
+	return 0;
+}
+
+int br_get_port_info(const struct port *p, struct port_info *info)
+{
+	struct __port_info i;
+
+	if (br_device_ioctl(p->parent, BRCTL_GET_PORT_INFO,
+			    (unsigned long)&i, p->index, 0) < 0) {
+		fprintf(stderr, "%s: can't get port %d info %s\n",
+			p->parent->ifname, p->index, strerror(errno));
+		return errno;
+	}
+
+	memcpy(&info->designated_root, &i.designated_root, 8);
+	memcpy(&info->designated_bridge, &i.designated_bridge, 8);
+	info->port_id = i.port_id;
+	info->designated_port = i.designated_port;
+	info->path_cost = i.path_cost;
+	info->designated_cost = i.designated_cost;
+	info->state = i.state;
+	info->top_change_ack = i.top_change_ack;
+	info->config_pending = i.config_pending;
+
+	return 0;
 }
 
 int br_add_interface(struct bridge *br, int ifindex)
@@ -101,11 +152,6 @@ int br_set_ageing_time(struct bridge *br, struct timeval *tv)
 
 int br_set_gc_interval(struct bridge *br, struct timeval *tv)
 {
-	unsigned long jif = __tv_to_jiffies(tv);
-
-	if (br_device_ioctl(br, BRCTL_SET_GC_INTERVAL, jif, 0, 0) < 0)
-		return errno;
-
 	return 0;
 }
 
@@ -174,3 +220,4 @@ int br_read_fdb(struct bridge *br, struct fdb_entry *fdbs, int offset, int num)
 
 	return numread;
 }
+

@@ -282,20 +282,33 @@ void br_cmd_stp(struct bridge *br, char *arg0, char *arg1)
 
 void br_cmd_showstp(struct bridge *br, char *arg0, char *arg1)
 {
-	br_dump_info(br);
+	struct bridge_info info;
+
+	if (br_get_bridge_info(br, &info)) {
+		fprintf(stderr, "%s: can't get info %s\n", br->ifname,
+			strerror(errno));
+		return;
+	}
+	br_dump_info(br, &info);
 }
 
 void br_cmd_show(struct bridge *br, char *arg0, char *arg1)
 {
+	struct bridge_info info;
+
 	printf("bridge name\tbridge id\t\tSTP enabled\tinterfaces\n");
-	br = bridge_list;
-	while (br != NULL) {
+	for (br = bridge_list; br; br = br->next) {
 		printf("%s\t\t", br->ifname);
-		br_dump_bridge_id((unsigned char *)&br->info.bridge_id);
-		printf("\t%s\t\t", br->info.stp_enabled?"yes":"no");
+		if (br_get_bridge_info(br, &info)) {
+			fprintf(stderr, "can't get info %s\n",
+				strerror(errno));
+			continue;
+		}
+
+		br_dump_bridge_id((unsigned char *)&info.bridge_id);
+		printf("\t%s\t\t", info.stp_enabled?"yes":"no");
 		br_dump_interface_list(br);
 
-		br = br->next;
 	}
 }
 

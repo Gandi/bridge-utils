@@ -11,7 +11,6 @@ AC_PROG_RANLIB
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(fcntl.h sys/ioctl.h sys/time.h unistd.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -19,16 +18,11 @@ AC_C_CONST
 AC_HEADER_TIME
 
 dnl Checks for library functions.
-AC_FUNC_ALLOCA
 AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MEMCMP
-AC_TYPE_SIGNAL
-AC_FUNC_WAIT3
 AC_CHECK_FUNCS(gethostname socket strdup uname)
-
-AC_CHECK_FUNC(if_nametoindex, HAVE_IF_INDEX=1)
+AC_CHECK_FUNCS(if_nametoindex if_indextoname)
 
 AC_SUBST(KERNEL_HEADERS)
-AC_SUBST(HAVE_IF_INDEX)
 
 AC_OUTPUT(doc/Makefile libbridge/Makefile brctl/Makefile Makefile)

@@ -24,11 +24,11 @@
 extern int br_socket_fd;
 
 void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies);
-int __kernel_is_64_bit(void);
 unsigned long __tv_to_jiffies(struct timeval *tv);
 
 int br_get_br(unsigned long arg0, unsigned long arg1, unsigned long arg2);
 int br_set_br(unsigned long arg0, unsigned long arg1, unsigned long arg2);
-int br_device_ioctl(struct bridge *br, unsigned long arg0, unsigned long arg1, unsigned long arg2, unsigned long arg3);
+int br_device_ioctl(const struct bridge *br, unsigned long arg0, 
+		    unsigned long arg1, unsigned long arg2, unsigned long arg3);
 
 #endif

@@ -27,90 +27,10 @@
 #include "libbridge_private.h"
 
 #define MAX_BRIDGES	1024	/* arbitrary */
-#define MAX_PORTS	256	/* STP limitation */
+#define MAX_PORTS	4096
 
 int br_socket_fd;
 struct bridge *bridge_list;
-
-static void __bridge_info_copy(struct bridge_info *info, 
-			       const struct __bridge_info *i)
-{
-	memcpy(&info->designated_root, &i->designated_root, 8);
-	memcpy(&info->bridge_id, &i->bridge_id, 8);
-	info->root_path_cost = i->root_path_cost;
-	info->topology_change = i->topology_change;
-	info->topology_change_detected = i->topology_change_detected;
-	info->root_port = i->root_port;
-	info->stp_enabled = i->stp_enabled;
-	__jiffies_to_tv(&info->max_age, i->max_age);
-	__jiffies_to_tv(&info->hello_time, i->hello_time);
-	__jiffies_to_tv(&info->forward_delay, i->forward_delay);
-	__jiffies_to_tv(&info->bridge_max_age, i->bridge_max_age);
-	__jiffies_to_tv(&info->bridge_hello_time, i->bridge_hello_time);
-	__jiffies_to_tv(&info->bridge_forward_delay, i->bridge_forward_delay);
-	__jiffies_to_tv(&info->ageing_time, i->ageing_time);
-	__jiffies_to_tv(&info->gc_interval, i->gc_interval);
-	__jiffies_to_tv(&info->hello_timer_value, i->hello_timer_value);
-	__jiffies_to_tv(&info->tcn_timer_value, i->tcn_timer_value);
-	__jiffies_to_tv(&info->topology_change_timer_value,
-			i->topology_change_timer_value);
-	__jiffies_to_tv(&info->gc_timer_value, i->gc_timer_value);
-}
-
-static void __port_info_copy(struct port_info *info, 
-			     const struct __port_info *i)
-{
-	memcpy(&info->designated_root, &i->designated_root, 8);
-	memcpy(&info->designated_bridge, &i->designated_bridge, 8);
-	info->port_id = i->port_id;
-	info->designated_port = i->designated_port;
-	info->path_cost = i->path_cost;
-	info->designated_cost = i->designated_cost;
-	info->state = i->state;
-	info->top_change_ack = i->top_change_ack;
-	info->config_pending = i->config_pending;
-	__jiffies_to_tv(&info->message_age_timer_value,
-			i->message_age_timer_value);
-	__jiffies_to_tv(&info->forward_delay_timer_value,
-			i->forward_delay_timer_value);
-	__jiffies_to_tv(&info->hold_timer_value,
-			i->hold_timer_value);
-}
-
-static int br_read_info(struct bridge *br)
-{
-	struct __bridge_info i;
-
-	if (if_indextoname(br->ifindex, br->ifname) == NULL) {
-		/* index was there, but now it is gone! */
-		return -1;
-	}
-
-	if (br_device_ioctl(br, BRCTL_GET_BRIDGE_INFO,
-			    (unsigned long)&i, 0, 0) < 0) {
-		fprintf(stderr, "%s: can't get info %s\n",
-			br->ifname, strerror(errno));
-		return errno;
-	}
-
-	__bridge_info_copy(&br->info, &i);
-	return 0;
-}
-
-static int br_read_port_info(struct port *p)
-{
-	struct __port_info i;
-
-	if (br_device_ioctl(p->parent, BRCTL_GET_PORT_INFO,
-			    (unsigned long)&i, p->index, 0) < 0) {
-		fprintf(stderr, "%s: can't get port %d info %s\n",
-			p->parent->ifname, p->index, strerror(errno));
-		return errno;
-	}
-
-	__port_info_copy(&p->info, &i);
-	return 0;
-}
 
 static void br_nuke_bridge(struct bridge *b)
 {
@@ -153,9 +73,6 @@ static int br_make_port_list(struct bridge *br)
 		p->index = i;
 		*top = p;
 		top = &p->next;
-
-		if ((err = br_read_port_info(p)) != 0)
-			goto error_out;
 	}
 
 	return 0;
@@ -195,7 +112,7 @@ static int br_make_bridge_list(void)
 		memset(br, 0, sizeof(struct bridge));
 		br->ifindex = ifindices[i];
 		br->firstport = NULL;
-		if ( br_read_info(br) || br_make_port_list(br)) {
+		if ( br_make_port_list(br)) {
 			/* ignore the problem could just be a race! */
 			free(br);
 			continue;
