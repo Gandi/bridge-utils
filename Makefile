@@ -2,7 +2,6 @@ all:				brctl/brctl brctl/brctld misc/bidi
 
 clean:
 				make -C brctl clean
-				make -C doc clean
 				make -C libbridge clean
 				make -C misc clean
 
