@@ -269,6 +269,7 @@ static int old_get_port_info(const char *brname, const char *port,
 		}
 	}
 
+	info->port_no = index;
 	memcpy(&info->designated_root, &i.designated_root, 8);
 	memcpy(&info->designated_bridge, &i.designated_bridge, 8);
 	info->port_id = i.port_id;
@@ -304,6 +305,7 @@ int br_get_port_info(const char *brname, const char *port,
 	memset(info, 0, sizeof(*info));
 	fetch_id(sdir, "designated_root", &info->designated_root);
 	fetch_id(sdir, "designated_bridge", &info->designated_bridge);
+	info->port_no = fetch_int(sdir, "port_no");
 	info->port_id = fetch_int(sdir, "port_id");
 	info->designated_port = fetch_int(sdir, "designated_port");
 	info->path_cost = fetch_int(sdir, "path_cost");

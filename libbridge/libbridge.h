@@ -60,6 +60,7 @@ struct fdb_entry
 
 struct port_info
 {
+	unsigned port_no;
 	struct bridge_id designated_root;
 	struct bridge_id designated_bridge;
 	u_int16_t port_id;

@@ -66,14 +66,14 @@ static int dump_port_info(const char *br, const char *p,  void *arg)
 {
 	struct port_info pinfo;
 
-	printf("%s", p);
 	if (br_get_port_info(br, p, &pinfo)) {
-		printf("\tcan't get port info\n");
+		printf("Can't get info for %p",p);
 		return 1;
 	}
 
-	printf("\n port id\t\t%.4x\t\t\t", pinfo.port_id);
-	printf("state\t\t%15s\n", br_get_state_name(pinfo.state));
+	printf("%s (%d)\n", p, pinfo.port_no);
+	printf(" port id\t\t%.4x",  pinfo.port_id);
+	printf("\t\t\tstate\t\t%15s\n", br_get_state_name(pinfo.state));
 	printf(" designated root\t");
 	br_dump_bridge_id((unsigned char *)&pinfo.designated_root);
 	printf("\tpath cost\t\t%4i\n", pinfo.path_cost);
