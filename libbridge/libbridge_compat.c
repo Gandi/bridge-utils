@@ -7,6 +7,22 @@
  * Software Foundation, Inc.
  */
 
+/*
+ * On how to use this file: Serge Caron writes:
+ *
+ * I installed compat-glibc-6.2-2.1.3.2.i386.rpm in my Red Hat 5.2 box
+ *
+ * from the directory where libbridge is stored I ran
+ *
+ * gcc -Wall -g -nostdinc -I- -I.
+ *   -I /usr/i386-glibc21-linux/include
+ *   -I /usr/lib/gcc-lib/i386-redhat-linux/2.7.23/include
+ *   -c libbridge_compat.c
+ *
+ * Now this gives a nice .o file that keeps make happy. Running make in the top
+ * directory builds brctl and brctld against glibc-2.0.7.
+ */
+
 #define _BITS_LIBC_LOCK_H 1
 #define __libc_lock_define_initialized(a,b)
 #define __libc_lock_lock(a)
