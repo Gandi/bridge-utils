@@ -1,3 +1,13 @@
+20020403	Lennert Buytenhek <buytenh@gnu.org>
+
+	* autoconfization by Andreas Hofmeister.
+
+20020116	Lennert Buytenhek <buytenh@gnu.org>
+
+	* On sparc, try to detect 32/64-bitness of the kernel at runtime.
+
+	* Released bridge-utils 0.9.5.
+
 20020106	Lennert Buytenhek <buytenh@gnu.org>
 
 	* Remove 'tap'.
