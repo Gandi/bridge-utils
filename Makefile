@@ -5,8 +5,6 @@ clean:
 				make -C doc clean
 				make -C libbridge clean
 				make -C misc clean
-				rcsclean *
-				rm -f *~
 
 brctl/brctl:			brctl/brctl.c brctl/brctl.h brctl/brctl_cmd.c brctl/brctl_disp.c libbridge/libbridge.a libbridge/libbridge.h
 				make -C brctl
