@@ -54,7 +54,7 @@ int br_device_ioctl64(struct bridge *br, unsigned long arg0, unsigned long arg1,
 	args[3] = arg3;
 
 	memcpy(ifr.ifr_name, br->ifname, IFNAMSIZ);
-	((unsigned long long *)(&ifr.ifr_data))[0] = (unsigned long long)(unsinged long)args;
+	((unsigned long long *)(&ifr.ifr_data))[0] = (unsigned long long)(unsigned long)args;
 
 	return ioctl(br_socket_fd, SIOCDEVPRIVATE + 3, &ifr);
 }
