@@ -1,0 +1,80 @@
+Hi,
+
+If you have still unanswered questions after reading the HOWTO and the
+FAQ, you have found a bug. Please report bugs to bridge@openrock.net
+
+
+greetings,
+Lennert Buytenhek
+
+
+
+Questions that were Asked Frequently enough to get listed here
+==============================================================
+
+
+
+What does a bridge do?
+----------------------
+  A bridge transparently relays traffic between multiple network
+  interfaces. In plain English this means that a bridge connects two
+  or more physical ethernets together to form one bigger (logical)
+  ethernet.
+
+
+Is it protocol independent?
+---------------------------
+  Yes. The bridge knows nothing about protocols, it only sees ethernet
+  frames. As such, the bridging functionality is protocol independent,
+  and there should be no trouble relaying IPX, NetBEUI, IP, IPv6, etc.
+
+
+How is this bridging stuff different from a so-called 'switch'?
+---------------------------------------------------------------
+  It isn't.
+
+
+Why is your code better than a switch?
+--------------------------------------
+  First of all, my code wasn't written with the intent of having linux
+  boxen take over from dedicated networking hardware. Don't see the
+  linux bridging code as a replacement for switches, but rather as an
+  extension of the linux networking capabilities. Just like there are
+  situations where a linux router/dedicated brand router is better
+  than the other, there are situations where a linux bridge/dedicated
+  brand bridge is better than the other.
+
+  Most of the power of the linux bridging code lies in its
+  flexibility. There is a whole lot of bizarre stuff you can do with
+  linux already (read the 2.4 Advanced Routing document at
+  http://ds9a.nl if you're interested), and the bridging code merely
+  adds some more possibilities for obfuscation into the mix.
+
+  The most important uses for the linux bridge code I see as follows:
+  - Small bridges (up to 8 ports).
+  - Load sharing a server's traffic over multiple interfaces by
+    connecting sets of clients to different physical network
+    interfaces.
+  - A transparent firewall solution (using the ipchains/iptables
+    firewalling patch).
+
+
+My bridge does not show up in traceroute!
+-----------------------------------------
+  It is supposed not to. The operation of a bridge is (supposed to be)
+  fully transparent to the network, the networks that a bridge
+  connects together are actually to be viewed as one big
+  network. That's why the bridge does not show up in traceroute; the
+  packets do not feel like they are crossing a subnet boundary.
+
+  For more information on this, read a book about TCP/IP networking.
+
+
+Are there plans for MAC address filtering?
+------------------------------------------
+  You should be able to firewall on MAC addresses with the 2.4
+  firewalling patch. iptables has the ability to filter on MAC
+  addresses, and the firewalling patch should add that capability to
+  the bridging code. I only released the first incarnation of the 2.4
+  firewalling patch yesterday though, so don't expect this to be
+  stable yet.

@@ -1,0 +1,27 @@
+20001002	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Incorporated two cleanup patches from H. J. Lu (one splits
+	the CC define into CC and CFLAGS, the other one changes a few
+	occurances of __close into the libc5 compatibility stub to
+	close).
+
+	* Removed all RCS tags.
+
+	* Removed sample scripts dir.
+
+	* Tweaked THANKS file a bit (it needs updating as well..)
+
+	* Made 'show' command show an interface list.
+
+	* Changed the 'showbr' command to 'showstp'
+
+	* Tweaked FAQ.
+
+	* Added explanation for iptables firewalling.
+
+	* Released bridge-utils 0.9.2.
+
+20000905	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Incorporated Roger Venning's patch to tap which will let you
+	specify a local address to be used for the 'tunnel'.
