@@ -13,10 +13,10 @@ mandir=@mandir@
 SUBDIRS=libbridge brctl doc
 
 all:
-	for x in $(SUBDIRS); do (cd $$x && $(MAKE) ); done
+	for x in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$x ; done
 
 clean:
-	for x in $(SUBDIRS); do (cd $$x && $(MAKE) clean ); done
+	for x in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$x clean ; done
 
 distclean:	clean
 	rm -f config.log
@@ -30,5 +30,4 @@ maintainer-clean: distclean
 	rm -f doc/Makefile
 
 install:
-	for x in $(SUBDIRS); do (cd $$x && $(MAKE) install ); done
-
+	for x in $(SUBDIRS); do $(MAKE) -DDESTDIR=$(DESTDIR) $(MFLAGS) -C $$x install; done
