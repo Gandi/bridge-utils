@@ -1,7 +1,9 @@
-Hi there!
+This version of the bridge utilities is for Linux 2.4 and 2.6,
+it uses the sysfs interface if possible on Linux 2.6
 
-In this package you'll find the new-and-improved linux ethernet
-bridging code. I (Lennert Buytenhek) rewrote the linux bridging code
+
+---------------------------
+Lennert Buytenhek rewrote the linux bridging code
 because the old code was a big mess and nonextensible.
 
 The new code is published at:
@@ -24,15 +26,8 @@ Advantages of the new code are:
 
 
 If you have any comments, questions or suggestions, please send email to
-the mailing list.
-
-
-
-Have fun!
-Lennert Buytenhek
-
-
-
+the mailing list bridge@osdl.org
+--------------------------
 
 Files in this package:
 
@@ -44,8 +39,7 @@ Makefile	Recursive Makefile.
 
 README		This file.
 
-brctl/		The new-and-improved userspace bridge configuration
-		tool.
+brctl/		The userspace bridge configuration tool.
 
 bridge-utils.spec
 		A .spec file for Red Hat package building. "rpm -tb

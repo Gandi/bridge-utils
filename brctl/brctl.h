@@ -23,7 +23,7 @@ struct command
 {
 	int		nargs;
 	const char	*name;
-	int		(*func)(char **argv);
+	int		(*func)(int argc, char *const* argv);
 	const char 	*help;
 };
 

@@ -35,7 +35,7 @@ static int strtotimeval(struct timeval *tv, const char *time)
 	return 0;
 }
 
-static int br_cmd_addbr(char** argv)
+static int br_cmd_addbr(int argc, char*const* argv)
 {
 	int err;
 
@@ -54,7 +54,7 @@ static int br_cmd_addbr(char** argv)
 	}
 }
 
-static int br_cmd_delbr(char** argv)
+static int br_cmd_delbr(int argc, char*const* argv)
 {
 	int err;
 
@@ -79,7 +79,7 @@ static int br_cmd_delbr(char** argv)
 	}
 }
 
-static int br_cmd_addif(char** argv)
+static int br_cmd_addif(int argc, char *const* argv)
 {
 	int err;
 
@@ -109,7 +109,7 @@ static int br_cmd_addif(char** argv)
 	}
 }
 
-static int br_cmd_delif(char** argv)
+static int br_cmd_delif(int argc, char *const* argv)
 {
 	int err;
 
@@ -132,7 +132,7 @@ static int br_cmd_delif(char** argv)
 	}
 }
 
-static int br_cmd_setageing(char** argv)
+static int br_cmd_setageing(int argc, char *const* argv)
 {
 	int err;
 	struct timeval tv;
@@ -150,7 +150,7 @@ static int br_cmd_setageing(char** argv)
 	return err != 0;
 }
 
-static int br_cmd_setbridgeprio(char** argv)
+static int br_cmd_setbridgeprio(int argc, char *const* argv)
 {
 	int prio;
 	int err;
@@ -167,7 +167,7 @@ static int br_cmd_setbridgeprio(char** argv)
 	return err != 0;
 }
 
-static int br_cmd_setfd(char** argv)
+static int br_cmd_setfd(int argc, char *const* argv)
 {
 	struct timeval tv;
 	int err;
@@ -185,7 +185,7 @@ static int br_cmd_setfd(char** argv)
 	return err != 0;
 }
 
-static int br_cmd_sethello(char** argv)
+static int br_cmd_sethello(int argc, char *const* argv)
 {
 	struct timeval tv;
 	int err;
@@ -203,7 +203,7 @@ static int br_cmd_sethello(char** argv)
 	return err != 0;
 }
 
-static int br_cmd_setmaxage(char** argv)
+static int br_cmd_setmaxage(int argc, char *const* argv)
 {
 	struct timeval tv;
 	int err;
@@ -220,7 +220,7 @@ static int br_cmd_setmaxage(char** argv)
 	return err != 0;
 }
 
-static int br_cmd_setpathcost(char** argv)
+static int br_cmd_setpathcost(int argc, char *const* argv)
 {
 	int cost, err;
 
@@ -236,7 +236,7 @@ static int br_cmd_setpathcost(char** argv)
 	return err != 0;
 }
 
-static int br_cmd_setportprio(char** argv)
+static int br_cmd_setportprio(int argc, char *const* argv)
 {
 	int cost, err;
 
@@ -253,7 +253,7 @@ static int br_cmd_setportprio(char** argv)
 	return err != 0;
 }
 
-static int br_cmd_stp(char** argv)
+static int br_cmd_stp(int argc, char *const* argv)
 {
 	int stp, err;
 
@@ -275,7 +275,7 @@ static int br_cmd_stp(char** argv)
 	return err != 0;
 }
 
-static int br_cmd_showstp(char** argv)
+static int br_cmd_showstp(int argc, char *const* argv)
 {
 	struct bridge_info info;
 
@@ -309,7 +309,7 @@ static int show_bridge(const char *name, void *arg)
 	return 0;
 }
 
-static int br_cmd_show(char** argv)
+static int br_cmd_show(int argc, char *const* argv)
 {
 	printf("bridge name\tbridge id\t\tSTP enabled\tinterfaces\n");
 	br_foreach_bridge(show_bridge, NULL);
@@ -324,7 +324,7 @@ static int compare_fdbs(const void *_f0, const void *_f1)
 	return memcmp(f0->mac_addr, f1->mac_addr, 6);
 }
 
-static int br_cmd_showmacs(char** argv)
+static int br_cmd_showmacs(int argc, char *const* argv)
 {
 	const char *brname = argv[1];
 #define CHUNK 128
@@ -394,7 +394,7 @@ static const struct command commands[] = {
 	  "<bridge>\t\tshow a list of mac addrs"},
 	{ 1, "showstp", br_cmd_showstp, 
 	  "<bridge>\t\tshow bridge stp info"},
-	{ 1, "stp", br_cmd_stp,
+	{ 2, "stp", br_cmd_stp,
 	  "<bridge> <state>\tturn stp on/off" },
 };
 
@@ -410,15 +410,11 @@ const struct command *command_lookup(const char *cmd)
 	return NULL;
 }
 
-void command_help(const struct command *cmd)
-{
-	printf("\t%-10s\t%s\n", cmd->name, cmd->help);
-}
-
 void command_helpall(void)
 {
 	int i;
 
-	for (i = 0; i < sizeof(commands)/sizeof(commands[0]); i++) 
-		command_help(commands+i);
+	for (i = 0; i < sizeof(commands)/sizeof(commands[0]); i++) {
+		printf("\t%-10s\t%s\n", commands[i].name, commands[i].help);
+	}
 }

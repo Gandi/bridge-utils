@@ -30,7 +30,7 @@ static const char *state_names[5] = {
 	[BR_STATE_LISTENING] = "listening", 
 	[BR_STATE_LEARNING] = "learning", 
 	[BR_STATE_FORWARDING] = "forwarding", 
-	[BR_STATE_BLOCKING] ="blocking",
+	[BR_STATE_BLOCKING] = "blocking",
 };
 
 const char *br_get_state_name(int state)
@@ -39,4 +39,12 @@ const char *br_get_state_name(int state)
 		return state_names[state];
 
 	return "<INVALID STATE>";
+}
+
+int __br_hz_internal;
+
+int __get_hz(void)
+{
+	const char * s = getenv("HZ");
+	return s ? atoi(s) : HZ;
 }

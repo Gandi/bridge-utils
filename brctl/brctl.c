@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/errno.h>
+#include <getopt.h>
+
 #include "libbridge.h"
 #include "config.h"
 
@@ -27,39 +29,57 @@
 
 static void help()
 {
+	printf("Usage: brctl [commands]\n");
 	printf("commands:\n");
 	command_helpall();
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char *const* argv)
 {
 	const struct command *cmd;
+	int f;
+	static const struct option options[] = {
+		{ .name = "help", .val = 'h' },
+		{ .name = "version", .val = 'V' },
+		{ 0 }
+	};
 
-	if (argc < 2)
+	while ((f = getopt_long(argc, argv, "Vh", options, NULL)) != EOF) 
+		switch(f) {
+		case 'h':
+			help();
+			return 0;
+		case 'V':
+			printf("%s, %s\n", PACKAGE, VERSION);
+			return 0;
+		default:
+			fprintf(stderr, "Unknown option '%c'\n", f);
+			goto help;
+		}
+			
+	if (argc == optind)
 		goto help;
-
-	if (strcmp(argv[1], "-V") == 0) {
-		printf("%s, %s\n", PACKAGE, VERSION);
-		return 0;
-	}
-
+	
 	if (br_init()) {
 		fprintf(stderr, "can't setup bridge control: %s\n",
 			strerror(errno));
 		return 1;
 	}
 
-	if ((cmd = command_lookup(argv[1])) == NULL) {
+	argc -= optind;
+	argv += optind;
+	if ((cmd = command_lookup(*argv)) == NULL) {
 		fprintf(stderr, "never heard of command [%s]\n", argv[1]);
 		goto help;
 	}
 	
-	if (argc < cmd->nargs + 2) {
-		fprintf(stderr, "incorrect number of arguments for command\n");
-		goto help;
+	if (argc < cmd->nargs + 1) {
+		printf("Incorrect number of arguments for command\n");
+		printf("Usage: brctl %s %s\n", cmd->name, cmd->help);
+		return 1;
 	}
 
-	return cmd->func(++argv);
+	return cmd->func(argc, argv);
 
 help:
 	help();

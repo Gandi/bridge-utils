@@ -18,13 +18,11 @@ INSTALL=@INSTALL@
 
 common_SOURCES= brctl_cmd.c brctl_disp.c 
 brctl_SOURCES=  brctl.c $(common_SOURCES)
-brctld_SOURCES= brctld.c $(common_SOURCES)
 
 common_OBJECTS= $(common_SOURCES:.c=.o)
 brctl_OBJECTS= $(brctl_SOURCES:.c=.o)
-brctld_OBJECTS= $(brctld_SOURCES:.c=.o)
 
-OBJECTS= $(common_OBJECTS) $(brctl_OBJECTS) $(brctld_OBJECTS)
+OBJECTS= $(common_OBJECTS) $(brctl_OBJECTS)
 
 PROGRAMS= brctl 
 
