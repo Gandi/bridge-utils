@@ -26,12 +26,12 @@ AC_CHECK_FUNCS(gethostname socket strdup uname)
 AC_CHECK_FUNCS(if_nametoindex if_indextoname)
 
 dnl Check for libsysfs
-libsysfs_found=0
 AC_CHECK_HEADER(sysfs/libsysfs.h,
-		[AC_CHECK_LIB(sysfs, sysfs_open_directory, libsysfs_found=1)])
-if test $libsysfs_found != 1; then
-	AC_MSG_WARN([Compiling without libsysfs support!])
-fi
+	[AC_CHECK_LIB(sysfs, sysfs_open_directory, 
+	              [AC_DEFINE([HAVE_LIBSYSFS])],
+		      [AC_MSG_WARN([Missing sysfs library!])])],
+	[AC_MSG_WARN([Missing sysfs support!])])
+
 
 AC_SUBST(KERNEL_HEADERS)
 
