@@ -4,9 +4,6 @@ Longer term:
   skb queue when a port leaves the FORWARDING state. Not that anyone
   should care. But it's there.
 
-- For the firewall add-on patch:
-  - Firewalling on input or output interface?
-
 - RH initscripts for setting up bridge interfaces automatically. Right
   now, on my home machines, I kludge a bit. Things ought to be
   transparent, just like the bonding stuff.
