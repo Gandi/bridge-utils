@@ -28,7 +28,7 @@
 
 int br_ioctl(unsigned long arg0, unsigned long arg1, unsigned long arg2)
 {
-	unsigned long arg[3];
+	arg_t arg[3];
 
 	arg[0] = arg0;
 	arg[1] = arg1;
