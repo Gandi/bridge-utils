@@ -21,9 +21,10 @@
 
 struct command
 {
-	int needs_bridge_argument;
-	char *name;
-	void (*func)(struct bridge *br, char *arg0, char *arg1);
+	int	needs_bridge_argument;
+	int	num_string_arguments;
+	char	*name;
+	void	(*func)(struct bridge *br, char *arg0, char *arg1);
 };
 
 struct command *br_command_lookup(char *cmd);

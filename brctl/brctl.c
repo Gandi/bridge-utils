@@ -83,6 +83,11 @@ int main(int argc, char *argv[])
 		argindex++;
 	}
 
+	if (argc - argindex != cmd->num_string_arguments) {
+		fprintf(stderr, "incorrect number of arguments for command\n");
+		return 1;
+	}
+
 	cmd->func(br, argv[argindex], argv[argindex+1]);
 
 	return 0;

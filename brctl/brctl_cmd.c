@@ -89,6 +89,12 @@ void br_cmd_addif(struct bridge *br, char *ifname, char *arg1)
 			br->ifname);
 		break;
 
+	case ELOOP:
+		fprintf(stderr, "device %s is a bridge device itself; "
+			"can't enslave a bridge device to a bridge device.\n",
+			ifname);
+		break;
+
 	default:
 		perror("br_add_interface");
 		break;
@@ -295,22 +301,22 @@ void br_cmd_showmacs(struct bridge *br, char *arg0, char *arg1)
 }
 
 static struct command commands[] = {
-	{0, "addbr", br_cmd_addbr},
-	{1, "addif", br_cmd_addif},
-	{0, "delbr", br_cmd_delbr},
-	{1, "delif", br_cmd_delif},
-	{1, "setageing", br_cmd_setageing},
-	{1, "setbridgeprio", br_cmd_setbridgeprio},
-	{1, "setfd", br_cmd_setfd},
-	{1, "setgcint", br_cmd_setgcint},
-	{1, "sethello", br_cmd_sethello},
-	{1, "setmaxage", br_cmd_setmaxage},
-	{1, "setpathcost", br_cmd_setpathcost},
-	{1, "setportprio", br_cmd_setportprio},
-	{0, "show", br_cmd_show},
-	{1, "showmacs", br_cmd_showmacs},
-	{1, "showstp", br_cmd_showstp},
-	{1, "stp", br_cmd_stp},
+	{0, 1, "addbr", br_cmd_addbr},
+	{1, 1, "addif", br_cmd_addif},
+	{0, 1, "delbr", br_cmd_delbr},
+	{1, 1, "delif", br_cmd_delif},
+	{1, 1, "setageing", br_cmd_setageing},
+	{1, 1, "setbridgeprio", br_cmd_setbridgeprio},
+	{1, 1, "setfd", br_cmd_setfd},
+	{1, 1, "setgcint", br_cmd_setgcint},
+	{1, 1, "sethello", br_cmd_sethello},
+	{1, 1, "setmaxage", br_cmd_setmaxage},
+	{1, 2, "setpathcost", br_cmd_setpathcost},
+	{1, 2, "setportprio", br_cmd_setportprio},
+	{0, 0, "show", br_cmd_show},
+	{1, 0, "showmacs", br_cmd_showmacs},
+	{1, 0, "showstp", br_cmd_showstp},
+	{1, 1, "stp", br_cmd_stp},
 };
 
 struct command *br_command_lookup(char *cmd)
