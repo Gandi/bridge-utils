@@ -67,7 +67,7 @@ install -m 644 libbridge/libbridge.a %{buildroot}%{_libdir}
 %{_libdir}/libbridge.a
 
 %changelog
-* Tue Man 25 2004 Stephen Hemminger <shemminger@osdl.org>
+* Tue May 25 2004 Stephen Hemminger <shemminger@osdl.org>
 - cleanup to work for 1.0 code
 - add dependency on sysfs
 
