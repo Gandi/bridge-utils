@@ -1,3 +1,10 @@
+2005-03-16  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Released bridge-utils 1.0.6
+	* Fix for libsys detection (for FC)
+	* Update autoconf usage
+	* Allow multiple interfaces for addif,delif
+
 2004-12-02  Stephen Hemminger  <shemminger@osdl.org>
 
 	* Released bridge-utils 1.0.5

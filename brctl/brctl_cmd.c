@@ -81,55 +81,77 @@ static int br_cmd_delbr(int argc, char*const* argv)
 
 static int br_cmd_addif(int argc, char *const* argv)
 {
+	const char *brname;
 	int err;
 
-	switch (err = br_add_interface(argv[1], argv[2])) {
-	case 0:
-		return 0;
-	case ENODEV:
-		fprintf(stderr, "interface %s does not exist!\n", argv[2]);
-		return 1;
+	argc -= 2;
+	brname = *++argv;
 
-	case EBUSY:
-		fprintf(stderr,	"device %s is already a member of a bridge; "
-			"can't enslave it to bridge %s.\n", argv[2],
-			argv[1]);
-		return 1;
+	while (argc-- > 0) {
+		const char *ifname = *++argv;
+		err = br_add_interface(brname, ifname);
 
-	case ELOOP:
-		fprintf(stderr, "device %s is a bridge device itself; "
-			"can't enslave a bridge device to a bridge device.\n",
-			argv[2]);
-		return 1;
+		switch(err) {
+		case 0:
+			continue;
 
-	default:
-		fprintf(stderr, "can't add %s to bridge %s: %s\n",
-			argv[2], argv[1], strerror(err));
+		case ENODEV:
+			fprintf(stderr, "interface %s does not exist!\n", ifname);
+			break;
+
+		case EBUSY:
+			fprintf(stderr,	"device %s is already a member of a bridge; "
+				"can't enslave it to bridge %s.\n", ifname,
+				brname);
+			break;
+
+		case ELOOP:
+			fprintf(stderr, "device %s is a bridge device itself; "
+				"can't enslave a bridge device to a bridge device.\n",
+				ifname);
+			break;
+
+		default:
+			fprintf(stderr, "can't add %s to bridge %s: %s\n",
+				ifname, brname, strerror(err));
+		}
 		return 1;
 	}
+	return 0;
 }
 
 static int br_cmd_delif(int argc, char *const* argv)
 {
+	const char *brname;
 	int err;
 
-	switch (err = br_del_interface(argv[1], argv[2])) {
-	case 0:
-		return 0;
-	case ENODEV:
-		fprintf(stderr, "interface %s does not exist!\n", argv[2]);
-		return 1;
+	argc -= 2;
+	brname = *++argv;
 
-	case EINVAL:
-		fprintf(stderr, "device %s is not a slave of %s\n",
-			argv[2], argv[1]);
-		return 1;
+	while (argc-- > 0) {
+		const char *ifname = *++argv;
+		err = br_del_interface(brname, ifname);
+		switch (err) {
+		case 0:
+			continue;
 
-	default:
-		fprintf(stderr, "can't delete %s from %s: %s\n",
-			argv[2], argv[1], strerror(err));
+		case ENODEV:
+			fprintf(stderr, "interface %s does not exist!\n", 
+				ifname);
+			break;
+
+		case EINVAL:
+			fprintf(stderr, "device %s is not a slave of %s\n",
+				ifname, brname);
+			break;
+
+		default:
+			fprintf(stderr, "can't delete %s from %s: %s\n",
+				ifname, brname, strerror(err));
+		}
 		return 1;
 	}
+	return 0;
 }
 
 static int br_cmd_setageing(int argc, char *const* argv)
@@ -395,7 +417,7 @@ static const struct command commands[] = {
 	{ 1, "showstp", br_cmd_showstp, 
 	  "<bridge>\t\tshow bridge stp info"},
 	{ 2, "stp", br_cmd_stp,
-	  "<bridge> <state>\tturn stp on/off" },
+	  "<bridge> {on|off}\tturn stp on/off" },
 };
 
 const struct command *command_lookup(const char *cmd)

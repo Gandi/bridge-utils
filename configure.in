@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(brctl/brctl.c)
 AC_CONFIG_HEADER(libbridge/config.h)
-AM_INIT_AUTOMAKE(bridge-utils,1.0.5)
+AM_INIT_AUTOMAKE(bridge-utils,1.0.6)
 
 AC_ARG_WITH( linux-headers, [  --with-linux-headers     Location of the linux headers to use], 
     KERNEL_HEADERS=$withval, KERNEL_HEADERS="/usr/src/linux/include")
@@ -24,7 +24,14 @@ AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MEMCMP
 AC_CHECK_FUNCS(gethostname socket strdup uname)
 AC_CHECK_FUNCS(if_nametoindex if_indextoname)
-AC_CHECK_LIB(sysfs, sysfs_open_directory)
+
+dnl Check for libsysfs
+libsysfs_found=0
+AC_CHECK_HEADER(sysfs/libsysfs.h,
+		[AC_CHECK_LIB(sysfs, sysfs_open_directory, libsysfs_found=1)])
+if test $libsysfs_found != 1; then
+	AC_MSG_WARN([Compiling without libsysfs support!])
+fi
 
 AC_SUBST(KERNEL_HEADERS)
 
