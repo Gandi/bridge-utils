@@ -2,13 +2,14 @@
 DESTDIR=
 KERNEL_HEADERS=-I@KERNEL_HEADERS@
 
-INSTALL=install -s
+INSTALL=@INSTALL@
 
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 bindir=@bindir@
 sbindir=@sbindir@
 mandir=@mandir@
+distdir = $(PACKAGE)-$(VERSION)
 
 SUBDIRS=libbridge brctl doc
 
@@ -31,3 +32,4 @@ maintainer-clean: distclean
 
 install:
 	for x in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$x install; done
+

@@ -22,12 +22,6 @@
 #include <net/if.h>
 #include <linux/if_bridge.h>
 
-struct bridge;
-struct bridge_info;
-struct fdb_entry;
-struct port;
-struct port_info;
-
 struct bridge_id
 {
 	unsigned char prio[2];
@@ -56,15 +50,6 @@ struct bridge_info
 	struct timeval gc_timer_value;
 };
 
-struct bridge
-{
-	struct bridge *next;
-
-	int ifindex;
-	char ifname[IFNAMSIZ];
-	struct port *firstport;
-};
-
 struct fdb_entry
 {
 	u_int8_t mac_addr[6];
@@ -90,37 +75,35 @@ struct port_info
 	struct timeval hold_timer_value;
 };
 
-struct port
-{
-	struct port *next;
-	int index;
-	int ifindex;
-	struct bridge *parent;
-};
+extern int br_init(void);
+extern int br_refresh(void);
+extern void br_shutdown(void);
 
-extern struct bridge *bridge_list;
+extern int br_foreach_bridge(int (*iterator)(const char *brname, void *),
+			     void *arg);
+extern int br_foreach_port(const char *brname,
+			   int (*iterator)(const char *brname,
+					   const char *port, int ifindex,
+					   void *),
+			   void *arg);
+extern const char *br_get_state_name(int state);
 
-int br_init(void);
-int br_refresh(void);
-struct bridge *br_find_bridge(const char *brname);
-struct port *br_find_port(struct bridge *br, const char *portname);
-const char *br_get_state_name(int state);
-
-int br_get_bridge_info(const struct bridge *br, struct bridge_info *);
-int br_get_port_info(const struct port *port, struct port_info *);
-int br_get_version(void);
-int br_add_bridge(const char *brname);
-int br_del_bridge(const char *brname);
-int br_add_interface(struct bridge *br, int ifindex);
-int br_del_interface(struct bridge *br, int ifindex);
-int br_set_bridge_forward_delay(struct bridge *br, struct timeval *tv);
-int br_set_bridge_hello_time(struct bridge *br, struct timeval *tv);
-int br_set_bridge_max_age(struct bridge *br, struct timeval *tv);
-int br_set_ageing_time(struct bridge *br, struct timeval *tv);
-int br_set_gc_interval(struct bridge *br, struct timeval *tv);
-int br_set_stp_state(struct bridge *br, int stp_state);
-int br_set_bridge_priority(struct bridge *br, int bridge_priority);
-int br_set_port_priority(struct port *p, int port_priority);
-int br_set_path_cost(struct port *p, int path_cost);
-int br_read_fdb(struct bridge *br, struct fdb_entry *fdbs, int offset, int num);
+extern int br_get_bridge_info(const char *br, struct bridge_info *);
+extern int br_get_port_info(const char *port, int ifindex, struct port_info *);
+extern int br_add_bridge(const char *brname);
+extern int br_del_bridge(const char *brname);
+extern int br_add_interface(const char *br, int ifindex);
+extern int br_del_interface(const char *br, int ifindex);
+extern int br_set_bridge_forward_delay(const char *br, struct timeval *tv);
+extern int br_set_bridge_hello_time(const char *br, struct timeval *tv);
+extern int br_set_bridge_max_age(const char *br, struct timeval *tv);
+extern int br_set_ageing_time(const char *br, struct timeval *tv);
+extern int br_set_stp_state(const char *br, int stp_state);
+extern int br_set_bridge_priority(const char *br, int bridge_priority);
+extern int br_set_port_priority(const char *br, const char *p, 
+				int port_priority);
+extern int br_set_path_cost(const char *br, const char *p, 
+			    int path_cost);
+extern int br_read_fdb(const char *br, struct fdb_entry *fdbs, 
+		       unsigned long skip, int num);
 #endif

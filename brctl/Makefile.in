@@ -4,7 +4,7 @@ KERNEL_HEADERS=-I@KERNEL_HEADERS@
 CC=@CC@
 CFLAGS= -Wall -g @CFLAGS@
 INCLUDE=-I../libbridge $(KERNEL_HEADERS) 
-LIBS= -L ../libbridge -lbridge
+LIBS= -L ../libbridge -lbridge -lsysfs
 
 prefix=@prefix@
 exec_prefix=@exec_prefix@

@@ -24,26 +24,14 @@
 #include "libbridge.h"
 #include "libbridge_private.h"
 
-unsigned long __tv_to_jiffies(struct timeval *tv)
-{
-	unsigned long long jif;
 
-	jif = 1000000ULL * tv->tv_sec + tv->tv_usec;
-
-	return (HZ*jif)/1000000;
-}
-
-void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies)
-{
-	unsigned long long tvusec;
-
-	tvusec = (1000000ULL*jiffies)/HZ;
-	tv->tv_sec = tvusec/1000000;
-	tv->tv_usec = tvusec - 1000000 * tv->tv_sec;
-}
-
-static const char *state_names[5] 
-= {"disabled", "listening", "learning", "forwarding", "blocking"};
+static const char *state_names[5] = {
+	[BR_STATE_DISABLED] = "disabled", 
+	[BR_STATE_LISTENING] = "listening", 
+	[BR_STATE_LEARNING] = "learning", 
+	[BR_STATE_FORWARDING] = "forwarding", 
+	[BR_STATE_BLOCKING] ="blocking",
+};
 
 const char *br_get_state_name(int state)
 {
@@ -51,37 +39,4 @@ const char *br_get_state_name(int state)
 		return state_names[state];
 
 	return "<INVALID STATE>";
-}
-
-struct bridge *br_find_bridge(const char *brname)
-{
-	struct bridge *b;
-
-	b = bridge_list;
-	while (b != NULL) {
-		if (!strcmp(b->ifname, brname))
-			return b;
-
-		b = b->next;
-	}
-
-	return NULL;
-}
-
-
-struct port *br_find_port(struct bridge *br, const char *portname)
-{
-	int index;
-	struct port *p;
-
-	index = if_nametoindex(portname);
-	if (index <= 0) 
-		return NULL;
-
-	for (p = br->firstport; p; p = p->next) {
-		if (p->ifindex == index)
-			return p;
-	}
-
-	return NULL;
 }

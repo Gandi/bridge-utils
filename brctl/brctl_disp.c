@@ -33,37 +33,41 @@ void br_show_timer(const struct timeval *tv)
 	printf("%4i.%.2i", (int)tv->tv_sec, (int)tv->tv_usec/10000);
 }
 
-void br_dump_interface_list(const struct bridge *br)
+static int first;
+
+static int dump_interface(const char *b, const char *p, int ind, void *arg)
 {
-	char ifname[IFNAMSIZ];
-	struct port *p;
 
-	p = br->firstport;
-	if (p != NULL) {
-		printf("%s", if_indextoname(p->ifindex, ifname));
-		p = p->next;
-	}
-	printf("\n");
+	if (first) 
+		first = 0;
+	else
+		printf("\n\t\t\t\t\t\t\t");
 
-	while (p != NULL) {
-		printf("\t\t\t\t\t\t\t%s\n", if_indextoname(p->ifindex, ifname));
-		p = p->next;
-	}
+	printf("%s", p);
+
+	return 0;
 }
 
-void br_dump_port_info(const struct port *p)
+void br_dump_interface_list(const char *br)
 {
-	char ifname[IFNAMSIZ];
+	first = 1;
+	br_foreach_port(br, dump_interface, NULL);
+	printf("\n");
+}
+
+static int dump_port_info(const char *br, const char *p, int ifindex, 
+			  void *arg)
+{
 	struct port_info pinfo;
 
-	printf("%s (%i)\n", if_indextoname(p->ifindex, ifname), p->index);
-	if (br_get_port_info(p, &pinfo)) {
+	printf("%s (%i)\n", p, if_nametoindex(p));
+	if (br_get_port_info(p, ifindex, &pinfo)) {
 		printf(" can't get port info\n");
-		return;
+		return 1;
 	}
 
 	printf(" port id\t\t%.4x\t\t\t", pinfo.port_id);
-	printf("state\t\t\t%s\n", br_get_state_name(pinfo.state));
+	printf("state\t\t%15s\n", br_get_state_name(pinfo.state));
 	printf(" designated root\t");
 	br_dump_bridge_id((unsigned char *)&pinfo.designated_root);
 	printf("\tpath cost\t\t%4i\n", pinfo.path_cost);
@@ -85,18 +89,13 @@ void br_dump_port_info(const struct port *p)
 		printf("TOPOLOGY_CHANGE_ACK ");
 	printf("\n");
 	printf("\n");
+	return 0;
 }
 
-void br_dump_info(const struct bridge *br, const struct bridge_info *bri)
+void br_dump_info(const char *br, const struct bridge_info *bri)
 {
-	const struct port *p;
 
-	printf("%s\n", br->ifname);
-	if (!bri->stp_enabled) {
-		printf(" STP is disabled for this interface\n");
-		return;
-	}
-
+	printf("%s\n", br);
 	printf(" bridge id\t\t");
 	br_dump_bridge_id((unsigned char *)&bri->bridge_id);
 	printf("\n designated root\t");
@@ -134,9 +133,5 @@ void br_dump_info(const struct bridge *br, const struct bridge_info *bri)
 	printf("\n");
 	printf("\n");
 
-	p = br->firstport;
-	while (p != NULL) {
-		br_dump_port_info(p);
-		p = p->next;
-	}
+	br_foreach_port(br, dump_port_info, NULL);
 }

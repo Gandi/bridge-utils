@@ -19,16 +19,56 @@
 #ifndef _LIBBRIDGE_PRIVATE_H
 #define _LIBBRIDGE_PRIVATE_H
 
+#include "config.h"
+
+#include <linux/sockios.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <linux/if_bridge.h>
 #include <asm/param.h>
 
+#ifdef HAVE_LIBSYSFS
+#include <sysfs/libsysfs.h>
+
+#ifndef SYSFS_BRIDGE_PORT_ATTR
+#error Using wrong kernel headers if_bridge.h is out of date.
+#endif
+
+#ifndef SIOCBRADDBR
+#error Using wrong kernel headers sockios.h is out of date.
+#endif
+
+#else
+struct sysfs_class { const char *name; };
+
+static inline struct sysfs_class *sysfs_open_class(const char *name)
+{
+	return NULL;
+}
+
+static inline void sysfs_close_class(struct sysfs_class *class)
+{
+}
+#endif
+
 extern int br_socket_fd;
+extern struct sysfs_class *br_class_net;
 
-void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies);
-unsigned long __tv_to_jiffies(struct timeval *tv);
+static inline unsigned long __tv_to_jiffies(const struct timeval *tv)
+{
+	unsigned long long jif;
 
-int br_get_br(unsigned long arg0, unsigned long arg1, unsigned long arg2);
-int br_set_br(unsigned long arg0, unsigned long arg1, unsigned long arg2);
-int br_device_ioctl(const struct bridge *br, unsigned long arg0, 
-		    unsigned long arg1, unsigned long arg2, unsigned long arg3);
+	jif = 1000000ULL * tv->tv_sec + tv->tv_usec;
 
+	return (HZ*jif)/1000000;
+}
+
+static inline void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies)
+{
+	unsigned long long tvusec;
+
+	tvusec = (1000000ULL*jiffies)/HZ;
+	tv->tv_sec = tvusec/1000000;
+	tv->tv_usec = tvusec - 1000000 * tv->tv_sec;
+}
 #endif

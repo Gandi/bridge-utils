@@ -1,6 +1,6 @@
 
 DESTDIR=
-KERNEL_HEADERS=-I/usr/src/linux/include
+KERNEL_HEADERS=-I/home/shemminger/bridge-2.6/include
 
 INSTALL=install -s
 
