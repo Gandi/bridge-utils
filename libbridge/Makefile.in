@@ -30,10 +30,7 @@ install: libbridge.a
 
 
 clean:
-	rcsclean *
-	rm -f *~
-	rm -f *.o
-	rm -f libbridge.a
+	rm -f *.o libbridge.a
 
 libbridge.a:	$(libbridge_OBJECTS)
 	$(AR) rcs $@ $(libbridge_OBJECTS)

@@ -1,3 +1,9 @@
+20040601	Stephen Hemminger <shemminger@osdl.org>
+	* Released bridge-utils 1.0.4
+	  - should build with out sysfs now.
+	  - report errors on foreach_port failing
+	  - more build cleanup
+
 20040525	Stephen Hemminger <shemminger@osdl.org>
 	* Released bridge-utils 1.0.1
 	  - Change configure option 

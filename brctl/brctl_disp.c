@@ -18,7 +18,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
+
 #include "libbridge.h"
 #include "brctl.h"
 
@@ -50,9 +52,14 @@ static int dump_interface(const char *b, const char *p, int ind, void *arg)
 
 void br_dump_interface_list(const char *br)
 {
+	int err;
+
 	first = 1;
-	br_foreach_port(br, dump_interface, NULL);
-	printf("\n");
+	err = br_foreach_port(br, dump_interface, NULL);
+	if (err < 0)
+		printf(" can't get port info: %s\n", strerror(-err));
+	else
+		printf("\n");
 }
 
 static int dump_port_info(const char *br, const char *p,  int count, void *arg)
@@ -93,6 +100,7 @@ static int dump_port_info(const char *br, const char *p,  int count, void *arg)
 
 void br_dump_info(const char *br, const struct bridge_info *bri)
 {
+	int err;
 
 	printf("%s\n", br);
 	printf(" bridge id\t\t");
@@ -132,5 +140,7 @@ void br_dump_info(const char *br, const struct bridge_info *bri)
 	printf("\n");
 	printf("\n");
 
-	br_foreach_port(br, dump_port_info, NULL);
+	err = br_foreach_port(br, dump_port_info, NULL);
+	if (err < 0)
+		printf("can't get ports: %s\n", strerror(-err));
 }
