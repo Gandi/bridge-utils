@@ -35,20 +35,11 @@ will use the linux ethernet bridge interface library.
 %setup -n bridge-utils
 
 %build
+CFLAGS="${RPM_OPT_FLAGS}" ./configure --prefix=/usr --mandir=%{_mandir}
 make
 
 %install
-[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
-mkdir -p ${RPM_BUILD_ROOT}
-mkdir -p ${RPM_BUILD_ROOT}%{_sbindir}
-mkdir -p ${RPM_BUILD_ROOT}%{_includedir}
-mkdir -p ${RPM_BUILD_ROOT}%{_libdir}
-mkdir -p ${RPM_BUILD_ROOT}%{_mandir}/man8
-install -m 0755 brctl/brctl ${RPM_BUILD_ROOT}/%{_sbindir}
-gzip doc/brctl.8
-install -m 0644  doc/brctl.8.gz ${RPM_BUILD_ROOT}%{_mandir}/man8
-install -m 0644 libbridge/libbridge.h ${RPM_BUILD_ROOT}%{_includedir}
-install -m 0644 libbridge/libbridge.a ${RPM_BUILD_ROOT}%{_libdir}/
+make install
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
