@@ -39,7 +39,17 @@ CFLAGS="${RPM_OPT_FLAGS}" ./configure --prefix=/usr --mandir=%{_mandir}
 make
 
 %install
-make install
+rm -rf %{buildroot}
+
+mkdir -p %{buildroot}%{_sbindir}
+mkdir -p %{buildroot}%{_includedir}
+mkdir -p %{buildroot}%{_libdir}
+mkdir -p %{buildroot}%{_mandir}/man8
+install -m755 brctl/brctl %{buildroot}%{_sbindir}
+gzip doc/brctl.8
+install -m 644 doc/brctl.8.gz %{buildroot}%{_mandir}/man8
+install -m 644 libbridge/libbridge.h %{buildroot}%{_includedir}
+install -m 644 libbridge/libbridge.a %{buildroot}%{_libdir}
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT

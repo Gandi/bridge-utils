@@ -30,4 +30,4 @@ maintainer-clean: distclean
 	rm -f doc/Makefile
 
 install:
-	for x in $(SUBDIRS); do $(MAKE) -DDESTDIR=$(DESTDIR) $(MFLAGS) -C $$x install; done
+	for x in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$x install; done
