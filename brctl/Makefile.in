@@ -3,6 +3,7 @@ KERNEL_HEADERS=-I@KERNEL_HEADERS@
 
 CC=@CC@
 CFLAGS= -Wall -g @CFLAGS@
+LDFLAGS=@LDFLAGS@
 INCLUDE=-I../libbridge $(KERNEL_HEADERS) 
 LIBS= -L ../libbridge -lbridge -lsysfs
 
@@ -35,7 +36,7 @@ install: $(PROGRAMS)
 	$(INSTALL) -m 755 $(PROGRAMS) $(DESTDIR)$(sbindir)
 
 brctl:	$(brctl_OBJECTS) ../libbridge/libbridge.a
-	$(CC) $(brctl_OBJECTS) $(LIBS) -o brctl
+	$(CC) $(LDFLAGS) $(brctl_OBJECTS) $(LIBS) -o brctl
 
 # brctld is for debug only, not production use
 brctld:	$(brctld_OBJECTS)
