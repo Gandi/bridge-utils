@@ -58,7 +58,7 @@ static struct sysfs_directory *bridge_sysfs_directory(const char *devname,
 	snprintf(path, SYSFS_PATH_MAX, "%s/%s", dev->path, subname);
 	sdir = sysfs_open_directory(path);
 	if (!sdir)
-		fprintf(stderr, "Can't open directory: %s\n", path);
+		dprintf("can't open directory: %s\n", path);
 	return sdir;
 }
 
@@ -277,7 +277,7 @@ int br_add_interface(const char *bridge, int ifindex)
 #ifdef SIOCBRADDIF
 	ifr.ifr_ifindex = ifindex;
 	err = ioctl(br_socket_fd, SIOCBRADDIF, &ifr);
-	if (err < 0 && errno == EOPNOTSUPP)
+	if (err < 0)
 #endif
 	{
 		unsigned long args[4] = { BRCTL_ADD_IF, ifindex, 0, 0 };
@@ -298,7 +298,7 @@ int br_del_interface(const char *bridge, int ifindex)
 #ifdef SIOCBRDELIF
 	ifr.ifr_ifindex = ifindex;
 	err = ioctl(br_socket_fd, SIOCBRDELIF, &ifr);
-	if (err < 0 && errno == EOPNOTSUPP)
+	if (err < 0)
 #endif		
 	{
 		unsigned long args[4] = { BRCTL_DEL_IF, ifindex, 0, 0 };

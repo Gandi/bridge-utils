@@ -1,3 +1,13 @@
+20040525	Stephen Hemminger <shemminger@osdl.org>
+	* Released bridge-utils 1.0.1
+	  - Change configure option 
+	    from --with-linux=<path>
+	    to   --with-linux-headers=<path>
+	    so options match help message.
+	  - Fix so utilities work with earlier 2.6 kernels that
+	    have sysfs but not new ioctl's or directories yet.
+	  - Build spec file from template.
+	
 20040524	Stephen Hemminger <shemminger@osdl.org>
 	* Released bridge-utils 1.0
 	  - Use sysfs to control bridge parameters

@@ -33,7 +33,7 @@ int br_add_bridge(const char *brname)
 
 #ifdef SIOCBRADDBR
 	ret = ioctl(br_socket_fd, SIOCBRADDBR, brname);
-	if (ret < 0 && errno == -EOPNOTSUPP) 
+	if (ret < 0)
 #endif
 	{
 		char _br[IFNAMSIZ];
@@ -53,7 +53,7 @@ int br_del_bridge(const char *brname)
 
 #ifdef SIOCBRDELBR	
 	ret = ioctl(br_socket_fd, SIOCBRDELBR, brname);
-	if (ret < 0 && errno == -EOPNOTSUPP)
+	if (ret < 0)
 #endif
 	{
 		char _br[IFNAMSIZ];

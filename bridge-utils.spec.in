@@ -1,5 +1,5 @@
-Name: bridge-utils
-Version: 1.0
+Name: @PACKAGE@
+Version: @VERSION@
 Release: 1
 Copyright: GPL
 Group: System Environment/Base
