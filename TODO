@@ -3,7 +3,6 @@ main code
 we have a tiny deviation from IEEE 802.1d: we don't kill the awaiting-tx skb
   queue when a port leaves the FORWARDING state
 RH initscripts for setting up bridge interfaces automatically
-improve documentation..
 bridge ID change notifications
 for 2.4: module_author and module_description
 smarter fdb timeout scheme
@@ -16,15 +15,15 @@ to be MLT (Nortel Multi Link Trunking) compatible: send bpdu's on all
 faster switch to forward mode
   per-port STP disabling
   'fast start': listening->learning->forwarding in 2*hello instead of 2*fd
-
+enslaved devs same MAC (like tap), then one changes
 
 
 managerial
 ----------
+improve documentation..
 backup mailing list archives of openrock and math somewhere
 revamp the web page
 add web page mirrors
-
 
 
 netfilter patch
@@ -39,5 +38,3 @@ br_nf_forward: physoutdev (but id.)
 remove outdev assign in br_nf_local_out_postrouting
 check: don't send unreachables
 stp state delay
-enslaved devs same MAC (like tap), then one changes
-module unload race (as of 0.0.2)
