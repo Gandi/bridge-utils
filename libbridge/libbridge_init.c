@@ -186,12 +186,10 @@ static int  old_foreach_port(const char *brname,
 	for (i = 0; i < MAX_PORTS; i++) {
 		if (!ifindices[i])
 			continue;
-
 		if (!if_indextoname(ifindices[i], ifname)) 
 			continue;
-
 		++count;
-		if (iterator(brname, ifname, ifindices[i], arg))
+		if (iterator(brname, ifname, i, arg))
 			break;
 	}
 
@@ -225,6 +223,7 @@ int br_foreach_port(const char *brname,
 	snprintf(path, sizeof(path), "%s/%s", 
 		 dev->path, SYSFS_BRIDGE_PORT_SUBDIR);
 
+	dprintf("path=%s\n", path);
 	dir = sysfs_open_directory(path);
 	if (!dir) {
 		/* no /sys/class/net/ethX/brif subdirectory
@@ -242,15 +241,8 @@ int br_foreach_port(const char *brname,
 
 	err = 0;
 	dlist_for_each_data(links, plink, struct sysfs_link) {
-		int ifindex = if_nametoindex(plink->name);
-
-		if (!ifindex) {
-			dprintf("can't find ifindex for %s\n", plink->name);
-			continue;
-		}
-
 		++err;
-		if (iterator(brname, plink->name, ifindex, arg))
+		if (iterator(brname, plink->name, err, arg))
 			break;
 
 	}

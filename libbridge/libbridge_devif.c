@@ -209,21 +209,21 @@ int br_get_bridge_info(const char *bridge, struct bridge_info *info)
 #endif
 }
 
-static int old_get_port_info(const char *brname, int ifindex, 
+static int old_get_port_info(const char *brname, int index,
 			     struct port_info *info)
 {
 	struct __port_info i;
 	struct ifreq ifr;
 	unsigned long args[4] = { BRCTL_GET_PORT_INFO,
-				  (unsigned long) &i, ifindex, 0 };
+				  (unsigned long) &i, index, 0 };
 
 	memset(info, 0, sizeof(*info));
 	strncpy(ifr.ifr_name, brname, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 
 	if (ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		dprintf("can't get port %s(%d) info %s\n",
-			brname, ifindex, strerror(errno));
+		dprintf("old can't get port %s(%d) info %s\n",
+			brname, index, strerror(errno));
 		return errno;
 	}
 
@@ -246,25 +246,17 @@ static int old_get_port_info(const char *brname, int ifindex,
 
 /*
  * Get information about port on bridge.
- * Note: that when using old interface we need bridge name and ifindex,
- *       but new interface only really needs port name.
  */
-int br_get_port_info(const char *brname, int ifindex, struct port_info *info)
+int br_get_port_info(const char *brname, const char *port, int index,
+		     struct port_info *info)
 {
 #ifndef HAVE_LIBSYSFS
-	return old_get_port_info(brname, ifindex, info);
+	return old_get_port_info(brname, index, info);
 #else
-	struct sysfs_directory *sdir;
-	char port[IFNAMSIZ];
-
-	if (!if_indextoname(ifindex, port)) {
-		dprintf("can't find name for port index %d\n", ifindex);
-		return -errno;
-	}
-
-	sdir = bridge_sysfs_directory(port, SYSFS_BRIDGE_PORT_ATTR);
+	struct sysfs_directory *sdir
+		= bridge_sysfs_directory(port, SYSFS_BRIDGE_PORT_ATTR);
 	if (!sdir) 
-		return old_get_port_info(port, ifindex, info);
+		return old_get_port_info(brname, index, info);
 
 	memset(info, 0, sizeof(*info));
 	fetch_id(sdir, "designated_root", &info->designated_root);

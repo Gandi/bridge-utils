@@ -55,18 +55,17 @@ void br_dump_interface_list(const char *br)
 	printf("\n");
 }
 
-static int dump_port_info(const char *br, const char *p, int ifindex, 
-			  void *arg)
+static int dump_port_info(const char *br, const char *p,  int count, void *arg)
 {
 	struct port_info pinfo;
 
-	printf("%s (%i)\n", p, ifindex);
-	if (br_get_port_info(br, ifindex, &pinfo)) {
-		printf(" can't get port info\n");
+	printf("%s (%i)", p, count);
+	if (br_get_port_info(br, p, count, &pinfo)) {
+		printf("\tcan't get port info\n");
 		return 1;
 	}
 
-	printf(" port id\t\t%.4x\t\t\t", pinfo.port_id);
+	printf("\n port id\t\t%.4x\t\t\t", pinfo.port_id);
 	printf("state\t\t%15s\n", br_get_state_name(pinfo.state));
 	printf(" designated root\t");
 	br_dump_bridge_id((unsigned char *)&pinfo.designated_root);
