@@ -187,9 +187,15 @@ int br_read_fdb(struct bridge *br, struct fdb_entry *fdbs, int offset, int num)
 	int i;
 	int numread;
 
-	if ((numread = br_device_ioctl(br, BRCTL_GET_FDB_ENTRIES,
-				       (unsigned long)f, num, offset)) < 0)
-		return errno;
+ again:
+	numread = br_device_ioctl(br, BRCTL_GET_FDB_ENTRIES,
+				  (unsigned long)f, num, offset);
+	if (numread < 0) {
+		if (errno == EAGAIN)
+			goto again;
+
+		return -errno;
+	}
 
 	for (i=0;i<numread;i++)
 		__copy_fdb(fdbs+i, f+i);
