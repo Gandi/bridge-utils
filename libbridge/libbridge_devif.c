@@ -27,8 +27,6 @@
 #include "libbridge.h"
 #include "libbridge_private.h"
 
-#define dprintf(fmt,arg...)
-
 #ifdef HAVE_LIBSYSFS
 /* Given two two character "0a" convert it to a byte */
 static unsigned char getoctet(const char *cp) 
@@ -392,11 +390,40 @@ int br_set_bridge_priority(const char *br, int bridge_priority)
 		      BRCTL_SET_BRIDGE_PRIORITY);
 }
 
+static int nametoportindex(const char *brname, const char *ifname)
+{
+	int i;
+	int ifindex = if_nametoindex(ifname);
+	int ifindices[MAX_PORTS];
+	unsigned long args[4] = { BRCTL_GET_PORT_LIST,
+				  (unsigned long)ifindices, MAX_PORTS, 0 };
+	struct ifreq ifr;
+
+	if (ifindex <= 0)
+		goto error;
+
+	memset(ifindices, 0, sizeof(ifindices));
+	strncpy(ifr.ifr_name, brname, IFNAMSIZ);
+	ifr.ifr_data = (char *) &args;
+
+	if (ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr) < 0)
+		goto error;
+
+	for (i = 0; i < MAX_PORTS; i++) {
+		if (ifindices[i] == ifindex)
+			return i;
+	}
+
+	dprintf("%s is not a in bridge %s\n", ifname, brname);
+ error:
+	return -1;
+}
+
 static int port_set(const char *bridge, const char *ifname, 
 		    const char *name, unsigned long value, 
 		    unsigned long oldcode)
 {
-	int ret;
+	int ret, index;
 #ifdef HAVE_LIBSYSFS
 	struct sysfs_directory *sdir;
 
@@ -417,15 +444,18 @@ static int port_set(const char *bridge, const char *ifname,
 		sysfs_close_directory(sdir);
 	} else
 #endif
-	{
+	if ( (index = nametoportindex(bridge, ifname)) < 0)
+		ret = index;
+
+	else {
 		struct ifreq ifr;
-		int ifindex = if_nametoindex(ifname);
-		unsigned long args[4] = { oldcode, ifindex, value, 0 };
+		unsigned long args[4] = { oldcode, index, value, 0 };
 
 		strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
 		ifr.ifr_data = (char *) &args;
 		ret = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
 	}
+
 	return ret < 0 ? errno : 0;
 }
 

@@ -25,11 +25,6 @@
 #include "libbridge.h"
 #include "libbridge_private.h"
 
-#define MAX_BRIDGES	1024
-#define MAX_PORTS	1024
-
-#define dprintf(fmt,arg...)
-
 int br_socket_fd = -1;
 struct sysfs_class *br_class_net;
 
