@@ -36,7 +36,5 @@ int br_get_version(void);
 int br_ioctl(unsigned long arg0, unsigned long arg1, unsigned long arg2);
 int br_make_bridge_list(void);
 int br_make_port_list(struct bridge *br);
-int br_read_info(struct bridge *br);
-int br_read_port_info(struct port *p);
 
 #endif
