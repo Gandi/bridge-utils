@@ -22,18 +22,18 @@
 #include "libbridge.h"
 #include "brctl.h"
 
-void br_dump_bridge_id(unsigned char *x)
+void br_dump_bridge_id(const unsigned char *x)
 {
 	printf("%.2x%.2x.%.2x%.2x%.2x%.2x%.2x%.2x", x[0], x[1], x[2], x[3],
 	       x[4], x[5], x[6], x[7]);
 }
 
-void br_show_timer(struct timeval *tv)
+void br_show_timer(const struct timeval *tv)
 {
 	printf("%4i.%.2i", (int)tv->tv_sec, (int)tv->tv_usec/10000);
 }
 
-void br_dump_interface_list(struct bridge *br)
+void br_dump_interface_list(const struct bridge *br)
 {
 	char ifname[IFNAMSIZ];
 	struct port *p;
@@ -51,10 +51,10 @@ void br_dump_interface_list(struct bridge *br)
 	}
 }
 
-void br_dump_port_info(struct port *p)
+void br_dump_port_info(const struct port *p)
 {
 	char ifname[IFNAMSIZ];
-	struct port_info *pi;
+	const struct port_info *pi;
 
 	pi = &p->info;
 
@@ -84,10 +84,10 @@ void br_dump_port_info(struct port *p)
 	printf("\n");
 }
 
-void br_dump_info(struct bridge *br)
+void br_dump_info(const struct bridge *br)
 {
-	struct bridge_info *bri;
-	struct port *p;
+	const struct bridge_info *bri;
+	const struct port *p;
 
 	bri = &br->info;
 
