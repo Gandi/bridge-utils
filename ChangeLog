@@ -1,3 +1,23 @@
+20020106	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Remove 'tap'.
+
+	* Added TODO list.
+
+	* Added extra check for argument count to brctl
+
+	* Added error message for circular bridge dev enslavement to brctl.
+
+	* Get rid of some compiler warnings.
+
+	* Steal Red Hat rawhide spec file.
+
+	* Added 'how to use libbridge_compat.c' explanation by Serge Caron.
+
+	* Try to work around sparc64 brokenness (FUCK ARGHH FUCK FUCK FUCK)
+
+	* Release bridge-utils 0.9.4.
+
 20011107	Lennert Buytenhek <buytenh@gnu.org>
 
 	* Moved FAQ to the website.
