@@ -26,4 +26,4 @@ libbridge_init.o:	libbridge_init.c libbridge.h libbridge_private.h
 			$(CC) $(CFLAGS) -c libbridge_init.c
 
 libbridge_misc.o:	libbridge_misc.c libbridge.h libbridge_private.h
-			$(CC) $(CFLAGS) -c  libbridge_misc.c
+			$(CC) $(CFLAGS) -c libbridge_misc.c

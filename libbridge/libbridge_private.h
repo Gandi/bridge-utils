@@ -21,15 +21,6 @@
 
 #include <asm/param.h>
 
-#if defined(__arch64__) && defined(sparc)
-#define BRIDGE_IOCTL (SIOCDEVPRIVATE + 3)
-typedef unsigned long long arg_t;
-#else
-#define BRIDGE_IOCTL (SIOCDEVPRIVATE)
-typedef unsigned long arg_t;
-#endif
-
-
 extern int br_socket_fd;
 
 unsigned long __tv_to_jiffies(struct timeval *tv);

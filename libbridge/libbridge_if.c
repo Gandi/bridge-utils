@@ -26,15 +26,52 @@
 #include "libbridge.h"
 #include "libbridge_private.h"
 
-int br_ioctl(unsigned long arg0, unsigned long arg1, unsigned long arg2)
+static int br_ioctl32(unsigned long arg0, unsigned long arg1, unsigned long arg2)
 {
-	arg_t arg[3];
+	unsigned long arg[3];
 
 	arg[0] = arg0;
 	arg[1] = arg1;
 	arg[2] = arg2;
 
 	return ioctl(br_socket_fd, SIOCGIFBR, arg);
+}
+
+#ifdef sparc
+static int br_ioctl64(unsigned long arg0, unsigned long arg1, unsigned long arg2)
+{
+	unsigned long long arg[3];
+
+	arg[0] = arg0;
+	arg[1] = arg1;
+	arg[2] = arg2;
+
+	return ioctl(br_socket_fd, SIOCGIFBR, arg);
+}
+
+static int __kernel_is_64_bit()
+{
+	static int kernel_is_64_bit = -1;
+
+	if (kernel_is_64_bit == -1) {
+		struct utsname buf;
+
+		uname(&buf);
+		kernel_is_64_bit = !strcmp(buf.machine, "sparc64");
+	}
+
+	return kernel_is_64_bit;
+}
+#endif
+
+int br_ioctl(unsigned long arg0, unsigned long arg1, unsigned long arg2)
+{
+#ifdef sparc
+	if (__kernel_is_64_bit())
+		return br_ioctl64(arg0, arg1, arg2);
+#endif
+
+	return br_ioctl32(arg0, arg1, arg2);
 }
 
 int br_get_version()
