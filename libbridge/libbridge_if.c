@@ -23,6 +23,7 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/utsname.h>
 #include "libbridge.h"
 #include "libbridge_private.h"
 
@@ -37,7 +38,7 @@ static int br_ioctl32(unsigned long arg0, unsigned long arg1, unsigned long arg2
 	return ioctl(br_socket_fd, SIOCGIFBR, arg);
 }
 
-#ifdef sparc
+#ifdef __sparc__
 static int br_ioctl64(unsigned long arg0, unsigned long arg1, unsigned long arg2)
 {
 	unsigned long long arg[3];
@@ -49,7 +50,7 @@ static int br_ioctl64(unsigned long arg0, unsigned long arg1, unsigned long arg2
 	return ioctl(br_socket_fd, SIOCGIFBR, arg);
 }
 
-static int __kernel_is_64_bit()
+int __kernel_is_64_bit()
 {
 	static int kernel_is_64_bit = -1;
 
@@ -66,7 +67,7 @@ static int __kernel_is_64_bit()
 
 int br_ioctl(unsigned long arg0, unsigned long arg1, unsigned long arg2)
 {
-#ifdef sparc
+#ifdef __sparc__
 	if (__kernel_is_64_bit())
 		return br_ioctl64(arg0, arg1, arg2);
 #endif

@@ -23,8 +23,9 @@
 
 extern int br_socket_fd;
 
-unsigned long __tv_to_jiffies(struct timeval *tv);
 void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies);
+int __kernel_is_64_bit(void);
+unsigned long __tv_to_jiffies(struct timeval *tv);
 
 int br_device_ioctl(struct bridge *br,
 		     unsigned long arg0,

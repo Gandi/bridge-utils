@@ -37,12 +37,12 @@ int br_device_ioctl32(struct bridge *br, unsigned long arg0, unsigned long arg1,
 	args[3] = arg3;
 
 	memcpy(ifr.ifr_name, br->ifname, IFNAMSIZ);
-	((unsigned long *)(&ifr.ifr_data))[0] = ((unsigned long)args) & ~0UL;
+	((unsigned long *)(&ifr.ifr_data))[0] = (unsigned long)args;
 
 	return ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
 }
 
-#ifdef sparc
+#ifdef __sparc__
 int br_device_ioctl64(struct bridge *br, unsigned long arg0, unsigned long arg1, unsigned long arg2, unsigned long arg3)
 {
 	unsigned long long args[4];
@@ -54,7 +54,7 @@ int br_device_ioctl64(struct bridge *br, unsigned long arg0, unsigned long arg1,
 	args[3] = arg3;
 
 	memcpy(ifr.ifr_name, br->ifname, IFNAMSIZ);
-	((unsigned long long *)(&ifr.ifr_data))[0] = ((unsigned long long)args) & ~0UL;
+	((unsigned long long *)(&ifr.ifr_data))[0] = (unsigned long long)(unsinged long)args;
 
 	return ioctl(br_socket_fd, SIOCDEVPRIVATE + 3, &ifr);
 }
@@ -62,7 +62,7 @@ int br_device_ioctl64(struct bridge *br, unsigned long arg0, unsigned long arg1,
 
 int br_device_ioctl(struct bridge *br, unsigned long arg0, unsigned long arg1, unsigned long arg2, unsigned long arg3)
 {
-#ifdef sparc
+#ifdef __sparc__
 	if (__kernel_is_64_bit())
 		return br_device_ioctl64(br, arg0, arg1, arg2, arg3);
 #endif
