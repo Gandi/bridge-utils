@@ -32,7 +32,7 @@ Install bridge-utils-devel if you are going to develop programs which
 will use the linux ethernet bridge interface library.
 
 %prep
-%setup -n bridge-utils
+%setup -q
 
 %build
 CFLAGS="${RPM_OPT_FLAGS}" ./configure --prefix=/usr --mandir=%{_mandir}
