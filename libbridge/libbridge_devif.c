@@ -44,6 +44,9 @@ static struct sysfs_directory *bridge_sysfs_directory(const char *devname,
 	struct sysfs_class_device *dev;
 	char path[SYSFS_PATH_MAX];
 
+	if (!devname)
+		return NULL;
+
 	if (!br_class_net) {
 		dprintf("can't find class_net\n");
 		return NULL;
@@ -62,13 +65,13 @@ static struct sysfs_directory *bridge_sysfs_directory(const char *devname,
 	return sdir;
 }
 
-static void fetch_id(struct sysfs_directory *sdir, char *name, 
+static void fetch_id(struct sysfs_directory *sdir, const char *name, 
 		     struct bridge_id *id)
 {
 	struct sysfs_attribute *attr;
 
 	memset(id, 0, sizeof(id));
-	attr = sysfs_get_directory_attribute(sdir, name);
+	attr = sysfs_get_directory_attribute(sdir, (char *) name);
  	dprintf("fetch_id %s/%s = %s\n", sdir->path, name,
 		attr ? attr->value : "<null>\n");
 
@@ -92,11 +95,12 @@ static void fetch_id(struct sysfs_directory *sdir, char *name,
 	}
 }
 
-static void fetch_tv(struct sysfs_directory *sdir, char *name,
+/* Get a time value out of sysfs */
+static void fetch_tv(struct sysfs_directory *sdir, const char *name,
 		     struct timeval *tv)
 {
 	struct sysfs_attribute *attr
-		= sysfs_get_directory_attribute(sdir, name);
+		= sysfs_get_directory_attribute(sdir, (char *) name);
 
 	if (!attr) {
 		fprintf(stderr, "Can't find attribute %s/%s\n", sdir->path, name);
@@ -107,10 +111,11 @@ static void fetch_tv(struct sysfs_directory *sdir, char *name,
 	__jiffies_to_tv(tv, strtoul(attr->value, NULL, 0));
 }
 
-static int fetch_int(struct sysfs_directory *sdir, char *name)
+/* Fetch an integer attribute out of sysfs. */
+static int fetch_int(struct sysfs_directory *sdir, const char *name)
 {
 	struct sysfs_attribute *attr
-		= sysfs_get_directory_attribute(sdir, name);
+		= sysfs_get_directory_attribute(sdir, (char *) name);
 	int val = 0;
 
 	if (!attr) 
@@ -162,6 +167,10 @@ static int old_get_bridge_info(const char *bridge, struct bridge_info *info)
 	return 0;
 }
 
+/*
+ * Get bridge parameters using either sysfs or old
+ * ioctl.
+ */
 int br_get_bridge_info(const char *bridge, struct bridge_info *info)
 {
 #ifndef HAVE_LIBSYSFS
@@ -200,7 +209,8 @@ int br_get_bridge_info(const char *bridge, struct bridge_info *info)
 #endif
 }
 
-static int old_get_port_info(const char *port, int ifindex, struct port_info *info)
+static int old_get_port_info(const char *brname, int ifindex, 
+			     struct port_info *info)
 {
 	struct __port_info i;
 	struct ifreq ifr;
@@ -208,15 +218,14 @@ static int old_get_port_info(const char *port, int ifindex, struct port_info *in
 				  (unsigned long) &i, ifindex, 0 };
 
 	memset(info, 0, sizeof(*info));
-	strncpy(ifr.ifr_name, port, IFNAMSIZ);
+	strncpy(ifr.ifr_name, brname, IFNAMSIZ);
 	ifr.ifr_data = (char *) &args;
 
 	if (ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		fprintf(stderr, "can't get port %s(%d) info %s\n",
-			port, ifindex, strerror(errno));
+		dprintf("can't get port %s(%d) info %s\n",
+			brname, ifindex, strerror(errno));
 		return errno;
 	}
-	
 
 	memcpy(&info->designated_root, &i.designated_root, 8);
 	memcpy(&info->designated_bridge, &i.designated_bridge, 8);
@@ -235,12 +244,23 @@ static int old_get_port_info(const char *port, int ifindex, struct port_info *in
 	return 0;
 }
 
-int br_get_port_info(const char *port, int ifindex, struct port_info *info)
+/*
+ * Get information about port on bridge.
+ * Note: that when using old interface we need bridge name and ifindex,
+ *       but new interface only really needs port name.
+ */
+int br_get_port_info(const char *brname, int ifindex, struct port_info *info)
 {
 #ifndef HAVE_LIBSYSFS
-	return old_get_port_info(port, ifindex, info);
+	return old_get_port_info(brname, ifindex, info);
 #else
 	struct sysfs_directory *sdir;
+	char port[IFNAMSIZ];
+
+	if (!if_indextoname(ifindex, port)) {
+		dprintf("can't find name for port index %d\n", ifindex);
+		return -errno;
+	}
 
 	sdir = bridge_sysfs_directory(port, SYSFS_BRIDGE_PORT_ATTR);
 	if (!sdir) 

@@ -88,8 +88,9 @@ extern int br_foreach_port(const char *brname,
 			   void *arg);
 extern const char *br_get_state_name(int state);
 
-extern int br_get_bridge_info(const char *br, struct bridge_info *);
-extern int br_get_port_info(const char *port, int ifindex, struct port_info *);
+extern int br_get_bridge_info(const char *br, struct bridge_info *info);
+extern int br_get_port_info(const char *brname, int ifindex, 
+			    struct port_info *info);
 extern int br_add_bridge(const char *brname);
 extern int br_del_bridge(const char *brname);
 extern int br_add_interface(const char *br, int ifindex);

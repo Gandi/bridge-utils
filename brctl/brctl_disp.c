@@ -60,8 +60,8 @@ static int dump_port_info(const char *br, const char *p, int ifindex,
 {
 	struct port_info pinfo;
 
-	printf("%s (%i)\n", p, if_nametoindex(p));
-	if (br_get_port_info(p, ifindex, &pinfo)) {
+	printf("%s (%i)\n", p, ifindex);
+	if (br_get_port_info(br, ifindex, &pinfo)) {
 		printf(" can't get port info\n");
 		return 1;
 	}
