@@ -23,6 +23,7 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+
 #include "libbridge.h"
 #include "libbridge_private.h"
 
@@ -39,7 +40,14 @@ int br_device_ioctl(const struct bridge *br, unsigned long arg0,
 
 	strncpy(ifr.ifr_name, br->ifname, IFNAMSIZ);
 	((unsigned long *)(&ifr.ifr_data))[0] = (unsigned long)args;
-
+#ifdef SIOCBRDEV
+	{ int err = ioctl(br_socket_fd, SIOCBRDEV, &ifr);
+	  if (err >= 0)
+		return err;
+	}
+#else
+#warn SIOCBRDEV not defined
+#endif
 	return ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
 }
 

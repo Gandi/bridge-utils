@@ -12,15 +12,7 @@ exec_prefix=@exec_prefix@
 includedir=@includedir@
 libdir=@libdir@
 
-ifndef HAVE_IF_INDEX
-COMPAT_SOURCES=  \
-	libbridge_compat.c 
-else
-COMPAT_SOURCES=  
-endif
-
 libbridge_SOURCES= \
-	$(COMPAT_SOURCES) \
 	libbridge_devif.c \
 	libbridge_if.c \
 	libbridge_init.c \
