@@ -23,7 +23,7 @@
 #include "libbridge.h"
 #include "brctl.h"
 
-const char *version = "0.9.7";
+const char *version = "0.9.8";
 
 const char *help_message =
 "commands:\n"

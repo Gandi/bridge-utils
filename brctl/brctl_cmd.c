@@ -276,8 +276,7 @@ void br_cmd_stp(struct bridge *br, char *arg0, char *arg1)
 
 	err = br_set_stp_state(br, stp);
 	if (err)
-		fprintf(stderr, "set stp status failed: %s\n",
-			strerror(err));
+		fprintf(stderr, "set stp status failed: %d\n", err);
 }
 
 void br_cmd_showstp(struct bridge *br, char *arg0, char *arg1)

@@ -32,6 +32,79 @@
 int br_socket_fd;
 struct bridge *bridge_list;
 
+static void __bridge_info_copy(struct bridge_info *info, 
+			       const struct __bridge_info *i)
+{
+	memcpy(&info->designated_root, &i->designated_root, 8);
+	memcpy(&info->bridge_id, &i->bridge_id, 8);
+	info->root_path_cost = i->root_path_cost;
+	info->topology_change = i->topology_change;
+	info->topology_change_detected = i->topology_change_detected;
+	info->root_port = i->root_port;
+	info->stp_enabled = i->stp_enabled;
+	__jiffies_to_tv(&info->max_age, i->max_age);
+	__jiffies_to_tv(&info->hello_time, i->hello_time);
+	__jiffies_to_tv(&info->forward_delay, i->forward_delay);
+	__jiffies_to_tv(&info->bridge_max_age, i->bridge_max_age);
+	__jiffies_to_tv(&info->bridge_hello_time, i->bridge_hello_time);
+	__jiffies_to_tv(&info->bridge_forward_delay, i->bridge_forward_delay);
+	__jiffies_to_tv(&info->ageing_time, i->ageing_time);
+	__jiffies_to_tv(&info->hello_timer_value, i->hello_timer_value);
+	__jiffies_to_tv(&info->tcn_timer_value, i->tcn_timer_value);
+	__jiffies_to_tv(&info->topology_change_timer_value,
+			i->topology_change_timer_value);
+	__jiffies_to_tv(&info->gc_timer_value, i->gc_timer_value);
+}
+
+
+int br_get_bridge_info(const struct bridge *br, struct bridge_info *info)
+{
+	struct __bridge_info i;
+
+	if (br_device_ioctl(br, BRCTL_GET_BRIDGE_INFO, 
+			    (unsigned long )&i, 0, 0) < 0) {
+		return errno;
+	}
+
+	__bridge_info_copy(info, &i);
+	return 0;
+}
+
+static void __port_info_copy(struct port_info *info, 
+			     const struct __port_info *i)
+{
+	memcpy(&info->designated_root, &i->designated_root, 8);
+	memcpy(&info->designated_bridge, &i->designated_bridge, 8);
+	info->port_id = i->port_id;
+	info->designated_port = i->designated_port;
+	info->path_cost = i->path_cost;
+	info->designated_cost = i->designated_cost;
+	info->state = i->state;
+	info->top_change_ack = i->top_change_ack;
+	info->config_pending = i->config_pending;
+	__jiffies_to_tv(&info->message_age_timer_value,
+			i->message_age_timer_value);
+	__jiffies_to_tv(&info->forward_delay_timer_value,
+			i->forward_delay_timer_value);
+	__jiffies_to_tv(&info->hold_timer_value,
+			i->hold_timer_value);
+}
+
+int br_get_port_info(const struct port *p, struct port_info *info)
+{
+	struct __port_info i;
+
+	if (br_device_ioctl(p->parent, BRCTL_GET_PORT_INFO,
+			    (unsigned long)&i, p->index, 0) < 0) {
+		fprintf(stderr, "%s: can't get port %d info %s\n",
+			p->parent->ifname, p->index, strerror(errno));
+		return errno;
+	}
+	__port_info_copy(info, &i);
+
+	return 0;
+}
+
 static void br_nuke_bridge(struct bridge *b)
 {
 	struct port *p, *n;
@@ -46,26 +119,31 @@ static void br_nuke_bridge(struct bridge *b)
 
 static int br_make_port_list(struct bridge *br)
 {
-	int err;
-	int i;
-	int ifindices[MAX_PORTS];
+	int i, cnt;
 	struct port *p, **top;
+	int *ifindices;
 
-	memset(ifindices, 0, sizeof(ifindices));
-	if (br_device_ioctl(br, BRCTL_GET_PORT_LIST, (unsigned long)ifindices,
-			    MAX_PORTS, 0) < 0)
+	ifindices = calloc(MAX_PORTS, sizeof(int));
+	if (!ifindices)
+		return -ENOMEM;
+
+	cnt = br_device_ioctl(br, BRCTL_GET_PORT_LIST, 
+			      (unsigned long)ifindices,
+			      MAX_PORTS, 0);
+	if (cnt < 0)
 		return errno;
 
+	if (cnt == 0)
+		cnt = 256;	/* old 2.4 compatiablity */
+
 	top = &br->firstport;
-	for (i = 0; i < MAX_PORTS; i++) {
+	for (i = 0; i < cnt; i++) {
 		if (!ifindices[i])
 			continue;
 
 		p = malloc(sizeof(struct port));
-		if (!p) {
-			err = -ENOMEM;
-			goto error_out;
-		}
+		if (!p) 
+			goto nomem;
 
 		p->next = NULL;
 		p->ifindex = ifindices[i];
@@ -75,9 +153,10 @@ static int br_make_port_list(struct bridge *br)
 		top = &p->next;
 	}
 
+	free(ifindices);
 	return 0;
 
- error_out:
+ nomem:
 	p = br->firstport;
 	while (p) {
 		struct port *n = p->next;
@@ -85,14 +164,31 @@ static int br_make_port_list(struct bridge *br)
 		p = n;
 	}
 	br->firstport = NULL;
+	free(ifindices);
 
-	return err;
+	return -ENOMEM;
+}
+
+static struct bridge *new_bridge(int ifindex, const char *name)
+{
+	struct bridge *br;
+
+	br = malloc(sizeof(struct bridge));
+	if (br) {
+		memset(br, 0, sizeof(struct bridge));
+		br->ifindex = ifindex;
+		strncpy(br->ifname, name, IFNAMSIZ);
+		br->firstport = NULL;
+	}
+	return br;
 }
 
 static int br_make_bridge_list(void)
 {
+	struct bridge *br;
 	int i, num;
 	int ifindices[MAX_BRIDGES];
+	char ifname[IFNAMSIZ];
 
 	num = br_get_br(BRCTL_GET_BRIDGES, (unsigned long)ifindices, 
 			MAX_BRIDGES);
@@ -101,19 +197,16 @@ static int br_make_bridge_list(void)
 			strerror(errno));
 		return errno;
 	}
+
 	bridge_list = NULL;
-	for (i = 0;i < num; i++) {
-		struct bridge *br;
+	for (i = 0; i < num; i++) {
+		if (!if_indextoname(ifindices[i], ifname))
+			continue;
+		br = new_bridge(ifindices[i], ifname);
+		if (!br) /* ignore the problem could just be a race! */
+			continue;
 
-		br = malloc(sizeof(struct bridge));
-		if (!br)
-			return -ENOMEM;
-
-		memset(br, 0, sizeof(struct bridge));
-		br->ifindex = ifindices[i];
-		br->firstport = NULL;
 		if ( br_make_port_list(br)) {
-			/* ignore the problem could just be a race! */
 			free(br);
 			continue;
 		}
