@@ -31,7 +31,6 @@ netfilter patch
 ---------------
 make orig{src,dst}addr an anonymous union
 sync MAC addresses DNAT/SNAT
-check 'MASQUERADE'
 make src mac substitution configurable
 br_nf_pre_routing: ip_route_output -> output_key
 br_nf_forward_postrouting: physoutdev (but id.)
