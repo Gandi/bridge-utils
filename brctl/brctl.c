@@ -23,7 +23,7 @@
 #include "libbridge.h"
 #include "brctl.h"
 
-const char *version = "0.9.9";
+const char *version = "bridge-utils 1.0 (11-May-2004)";
 
 const char *help_message =
 "commands:\n"
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 		goto help;
 
 	if (strcmp(argv[1], "-V") == 0) {
-		fprintf(stderr, "bridge-utils %s\n", version);
+		fprintf(stderr, "%s, %s\n", argv[0], version);
 		return 0;
 	}
 
