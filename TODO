@@ -11,6 +11,11 @@ slab cache for fdbs?
 I'm not happy with the current timer tick interval
 make the bridge device zerocopy/highmem transparent
 move the spanning tree code to userspace
+to be MLT (Nortel Multi Link Trunking) compatible: send bpdu's on all
+  interfaces in the bonding bundle
+faster switch to forward mode
+  per-port STP disabling
+  'fast start': listening->learning->forwarding in 2*hello instead of 2*fd
 
 
 
