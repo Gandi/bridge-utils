@@ -56,7 +56,7 @@ rm -rf ${RPM_BUILD_ROOT}
 
 %files
 %defattr (-,root,root)
-%doc AUTHORS COPYING doc/FAQ doc/HOWTO doc/RPM-GPG-KEY
+%doc AUTHORS COPYING doc/FAQ doc/FIREWALL doc/HOWTO doc/RPM-GPG-KEY
 /sbin/brctl
 /usr/man/man8/brctl.8.gz
 

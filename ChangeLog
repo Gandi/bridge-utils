@@ -1,3 +1,11 @@
+20011107	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Moved FAQ to the website.
+
+	* Updated docs for 2.4 firewalling.
+
+	* Add out-of-date notice to the THANKS file.
+
 20001002	Lennert Buytenhek <buytenh@gnu.org>
 
 	* Incorporated two cleanup patches from H. J. Lu (one splits
