@@ -28,9 +28,10 @@ AC_CHECK_FUNCS(if_nametoindex if_indextoname)
 dnl Check for libsysfs
 AC_CHECK_HEADER(sysfs/libsysfs.h,
 	[AC_CHECK_LIB(sysfs, sysfs_open_directory, 
-	              [AC_DEFINE([HAVE_LIBSYSFS])],
+	              [AC_DEFINE(HAVE_LIBSYSFS)
+		       LIBS="$LIBS -lsysfs"],
 		      [AC_MSG_WARN([Missing sysfs library!])])],
-	[AC_MSG_WARN([Missing sysfs support!])])
+	[AC_MSG_WARN([Missing /usr/include/sysfs/libsysfs.h])])
 
 
 AC_SUBST(KERNEL_HEADERS)
