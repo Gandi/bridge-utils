@@ -211,6 +211,7 @@ int br_refresh()
 		br_nuke_bridge(b);
 		b = bnext;
 	}
+	bridge_list = NULL;
 
 	return br_make_bridge_list();
 }
