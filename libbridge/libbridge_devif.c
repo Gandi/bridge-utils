@@ -137,7 +137,7 @@ static int old_get_bridge_info(const char *bridge, struct bridge_info *info)
 	ifr.ifr_data = (char *) &args;
 
 	if (ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr) < 0) {
-		fprintf(stderr, "%s: can't get info %s\n",
+		dprintf("%s: can't get info %s\n",
 			bridge, strerror(errno));
 		return errno;
 	}
@@ -390,10 +390,20 @@ int br_set_bridge_priority(const char *br, int bridge_priority)
 		      BRCTL_SET_BRIDGE_PRIORITY);
 }
 
+/* sigh.. if_nametoindex busted on older glibc and uclibc */
+static inline unsigned int ifnametoindex(const char* ifname) 
+{
+    struct ifreq ifr;
+
+    strncpy (ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
+
+    return (ioctl(br_socket_fd, SIOCGIFINDEX,&ifr) < 0) ? 0 : ifr.ifr_ifindex;
+}
+
 static int nametoportindex(const char *brname, const char *ifname)
 {
 	int i;
-	int ifindex = if_nametoindex(ifname);
+	int ifindex = ifnametoindex(ifname);
 	int ifindices[MAX_PORTS];
 	unsigned long args[4] = { BRCTL_GET_PORT_LIST,
 				  (unsigned long)ifindices, MAX_PORTS, 0 };

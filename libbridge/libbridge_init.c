@@ -98,6 +98,18 @@ static int new_foreach_bridge(int (*iterator)(const char *name, void *),
 }
 #endif
 
+/* once again, if_indextoname busted on older glibc and uclibc */
+static inline char * ifindextoname (unsigned int ifindex, char *ifname)
+{
+	struct ifreq ifr;
+
+	ifr.ifr_ifindex = ifindex;
+	if ( ioctl(br_socket_fd, SIOCGIFNAME, &ifr) < 0) 
+		return NULL;
+
+	return strncpy(ifname, ifr.ifr_name, IFNAMSIZ);
+}
+
 /*
  * Old interface uses ioctl
  */
@@ -111,7 +123,6 @@ static int old_foreach_bridge(int (*iterator)(const char *, void *),
 				 (unsigned long)ifindices, MAX_BRIDGES };
 
 	num = ioctl(br_socket_fd, SIOCGIFBR, args);
-	dprintf("old_foreach_bridge num=%d\n", num);
 	if (num < 0) {
 		fprintf(stderr, "Get bridge indices failed: %s\n",
 			strerror(errno));
@@ -119,7 +130,7 @@ static int old_foreach_bridge(int (*iterator)(const char *, void *),
 	}
 
 	for (i = 0; i < num; i++) {
-		if (!if_indextoname(ifindices[i], ifname)) {
+		if (!ifindextoname(ifindices[i], ifname)) {
 			fprintf(stderr, "get find name for ifindex %d\n",
 				ifindices[i]);
 			return -errno;
@@ -174,15 +185,22 @@ static int  old_foreach_port(const char *brname,
 	ifr.ifr_data = (char *) &args;
 
 	err = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
-	if (err < 0)
+	if (err < 0) {
+		fprintf(stderr, "list ports for bridge:'%s' failed: %s\n",
+			brname, strerror(errno));
 		return -errno;
+	}
 
 	count = 0;
 	for (i = 0; i < MAX_PORTS; i++) {
 		if (!ifindices[i])
 			continue;
-		if (!if_indextoname(ifindices[i], ifname)) 
+		if (!ifindextoname(ifindices[i], ifname)) {
+			fprintf(stderr, "can't find name for ifindex:%d\n",
+				ifindices[i]);
 			continue;
+		}
+
 		++count;
 		if (iterator(brname, ifname, i, arg))
 			break;
