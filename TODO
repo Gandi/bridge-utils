@@ -33,3 +33,4 @@ make src mac substitution configurable
 br_nf_pre_routing: ip_route_output -> output_key
 check: don't send unreachables
 stp state delay
+kernel panic on REDIRECT on bridge device w/o IP address
