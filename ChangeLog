@@ -6,6 +6,14 @@
 
 	* Add out-of-date notice to the THANKS file.
 
+????????	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Fixed brctl timeout 42.94s wrap buglet.
+
+	* Cleanup some docs.
+
+	* Released bridge-utils 0.9.3.
+
 20001002	Lennert Buytenhek <buytenh@gnu.org>
 
 	* Incorporated two cleanup patches from H. J. Lu (one splits
