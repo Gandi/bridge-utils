@@ -1,3 +1,19 @@
+20040524	Stephen Hemminger <shemminger@osdl.org>
+	* Released bridge-utils 1.0
+	  - Use sysfs to control bridge parameters
+	  - Add new ioctl syntax to handle mixed 32/64 bit mode
+	    (Earlier method would not work on all platforms).
+	  - Change libbbridge API to do work as needed, rather
+	    than reading all bridges/ports at startup. Old way
+	    would not scale with 1000's of entries
+	  - Minor cleanups.
+
+20040401	Stephen Hemminger <shemminger@osdl.org>
+	* Releases bridge-utils 0.9.7
+	  - add -V option
+	  - support 100's of bridge ports
+	  - minor bug fixes
+
 20021002	Lennert Buytenhek <buytenh@gnu.org>
 
 	* Released bridge-utils 0.9.6.
