@@ -26,18 +26,18 @@
 
 unsigned long __tv_to_jiffies(struct timeval *tv)
 {
-	unsigned long jif;
+	unsigned long long jif;
 
-	jif = 1000000 * tv->tv_sec + tv->tv_usec;
+	jif = 1000000ULL * tv->tv_sec + tv->tv_usec;
 
 	return (HZ*jif)/1000000;
 }
 
 void __jiffies_to_tv(struct timeval *tv, unsigned long jiffies)
 {
-	unsigned long tvusec;
+	unsigned long long tvusec;
 
-	tvusec = (1000000*jiffies)/HZ;
+	tvusec = (1000000ULL*jiffies)/HZ;
 	tv->tv_sec = tvusec/1000000;
 	tv->tv_usec = tvusec - 1000000 * tv->tv_sec;
 }
