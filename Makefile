@@ -1,4 +1,4 @@
-all:				brctl/brctl brctl/brctld misc/bidi misc/tap
+all:				brctl/brctl brctl/brctld misc/bidi
 
 clean:
 				make -C brctl clean
@@ -18,7 +18,4 @@ libbridge/libbridge.a:		libbridge/if_index.c libbridge/libbridge.h libbridge/lib
 				make -C libbridge
 
 misc/bidi:			misc/bidi.c
-				make -C misc
-
-misc/tap:			misc/tap.c
 				make -C misc
