@@ -1,6 +1,6 @@
 
 DESTDIR=
-KERNEL_HEADERS=-I/home/shemminger/linux-2.6/include
+KERNEL_HEADERS=-I/usr/src/linux/include
 
 INSTALL=install -s
 
