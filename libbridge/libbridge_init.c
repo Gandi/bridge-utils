@@ -206,9 +206,8 @@ int br_foreach_port(const char *brname,
 {
 #ifdef HAVE_LIBSYSFS
 	struct sysfs_class_device *dev;
-	struct sysfs_directory *dir;
-	struct sysfs_link *plink;
-	struct dlist *links;
+	struct dlist *list;
+	const char *name;
 	int err = 0;
 	char path[SYSFS_PATH_MAX];
 
@@ -220,28 +219,23 @@ int br_foreach_port(const char *brname,
 		 dev->path, SYSFS_BRIDGE_PORT_SUBDIR);
 
 	dprintf("path=%s\n", path);
-	dir = sysfs_open_directory(path);
-	if (!dir) {
+	list = sysfs_open_directory_list(path);
+	if (!list) {
 		/* no /sys/class/net/ethX/brif subdirectory
 		 * either: old kernel, or not really a bridge
 		 */
+		dprintf("sysfs_open_directory failed\n");
 		goto old;
 	}
 
-	links = sysfs_get_dir_links(dir);
-	if (!links) {
-		err = -ENOSYS;
-		goto out;
-	}
-
 	err = 0;
-	dlist_for_each_data(links, plink, struct sysfs_link) {
+	dlist_for_each_data(list, name, const char) {
 		++err;
-		if (iterator(brname, plink->name, arg))
+		if (iterator(brname, name, arg))
 			break;
 	}
- out:
-	sysfs_close_directory(dir);
+
+	sysfs_close_list(list);
 	return err;
 
  old:

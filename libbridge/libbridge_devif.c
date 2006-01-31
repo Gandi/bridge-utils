@@ -35,43 +35,17 @@ static unsigned char getoctet(const char *cp)
 	return strtoul(t, NULL, 16);
 }
 
-static struct sysfs_directory *bridge_sysfs_directory(const char *devname,
-						      const char *subname)
-{
-	struct sysfs_directory *sdir;
-	struct sysfs_class_device *dev;
-	char path[SYSFS_PATH_MAX];
+#define BRIDGEATTR(_a)	SYSFS_BRIDGE_ATTR "/" _a
+#define BRPORT(_a)	SYSFS_BRIDE_PORT_ATTR "/" _a
 
-	if (!devname)
-		return NULL;
-
-	if (!br_class_net) {
-		dprintf("can't find class_net\n");
-		return NULL;
-	}
-
-	dev = sysfs_get_class_device(br_class_net, (char *) devname);
-	if (!dev) {
-		dprintf("can't find device %s in %s\n", devname, br_class_net->path);
-		return NULL;
-	}
-
-	snprintf(path, SYSFS_PATH_MAX, "%s/%s", dev->path, subname);
-	sdir = sysfs_open_directory(path);
-	if (!sdir)
-		dprintf("can't open directory: %s\n", path);
-	return sdir;
-}
-
-static void fetch_id(struct sysfs_directory *sdir, const char *name, 
-		     struct bridge_id *id)
+static void fetch_id(struct sysfs_class_device *dev,
+		     const char *name, struct bridge_id *id)
 {
 	struct sysfs_attribute *attr;
-
-	memset(id, 0, sizeof(id));
-	attr = sysfs_get_directory_attribute(sdir, (char *) name);
+	
+	attr = sysfs_get_classdev_attr(dev, name);
 	if (!attr) {
-		dprintf("Can't find attribute %s/%s\n", sdir->path, name);
+		dprintf("Can't find attribute %s/%s\n", dev->path, name);
 		return;
 	}
 
@@ -91,33 +65,25 @@ static void fetch_id(struct sysfs_directory *sdir, const char *name,
 }
 
 /* Get a time value out of sysfs */
-static void fetch_tv(struct sysfs_directory *sdir, const char *name,
+static void fetch_tv(struct sysfs_class_device *dev,
+		     const char *name,
 		     struct timeval *tv)
 {
-	struct sysfs_attribute *attr
-		= sysfs_get_directory_attribute(sdir, (char *) name);
+	struct sysfs_attribute *attr;
 
-	if (!attr) {
-		dprintf("Can't find attribute %s/%s\n", sdir->path, name);
-		memset(tv, 0, sizeof(tv));
-		return;
-	}
+	attr = sysfs_get_classdev_attr(dev, name);
+	if (attr)
+		__jiffies_to_tv(tv, strtoul(attr->value, NULL, 0));
 
-	__jiffies_to_tv(tv, strtoul(attr->value, NULL, 0));
 }
 
 /* Fetch an integer attribute out of sysfs. */
-static int fetch_int(struct sysfs_directory *sdir, const char *name)
+static int fetch_int(struct sysfs_class_device *dev, const char *name)
 {
-	struct sysfs_attribute *attr
-		= sysfs_get_directory_attribute(sdir, (char *) name);
-	int val = 0;
+	struct sysfs_attribute *attr;
 
-	if (!attr) 
-		dprintf("Can't find attribute %s/%s\n", sdir->path, name);
-	else 
-		val = strtol(attr->value, NULL, 0);
-	return val;
+	attr = sysfs_get_classdev_attr(dev, name);
+	return attr ? strtol(attr->value, NULL, 0) : 0;
 }
 #endif
 
@@ -206,40 +172,53 @@ static int old_get_bridge_info(const char *bridge, struct bridge_info *info)
  */
 int br_get_bridge_info(const char *bridge, struct bridge_info *info)
 {
-#ifndef HAVE_LIBSYSFS
-	return old_get_bridge_info(bridge, info);
-#else
-	struct sysfs_directory *sdir;
+#ifdef HAVE_LIBSYSFS
+	struct sysfs_class_device *dev;
+	char path[SYSFS_PATH_MAX];
 
-	sdir = bridge_sysfs_directory(bridge, SYSFS_BRIDGE_ATTR);
-	if (!sdir) 
-		return old_get_bridge_info(bridge,info);
+	if (!br_class_net) 
+		goto fallback;
+
+	dev = sysfs_get_class_device(br_class_net, bridge);
+	if (!dev) 
+		goto fallback;
+
+
+	snprintf(path, SYSFS_PATH_MAX, "%s/bridge", dev->path);
+	if (!sysfs_path_is_dir(path)) {
+		sysfs_close_class_device(dev);
+		goto fallback;
+	}
 
 	memset(info, 0, sizeof(*info));
-	fetch_id(sdir, "root_id", &info->designated_root);
-	fetch_id(sdir, "bridge_id", &info->bridge_id);
-	info->root_path_cost = fetch_int(sdir, "root_path_cost");
-	fetch_tv(sdir, "max_age", &info->max_age);
-	fetch_tv(sdir, "hello_time", &info->hello_time);
-	fetch_tv(sdir, "forward_delay", &info->forward_delay);
-	fetch_tv(sdir, "max_age", &info->bridge_max_age);
-	fetch_tv(sdir, "hello_time", &info->bridge_hello_time);
-	fetch_tv(sdir, "forward_delay", &info->bridge_forward_delay);
-	fetch_tv(sdir, "ageing_time", &info->ageing_time);
-	fetch_tv(sdir, "hello_timer", &info->hello_timer_value);
-	fetch_tv(sdir, "tcn_timer", &info->tcn_timer_value);
-	fetch_tv(sdir, "topology_change_timer", 
+	fetch_id(dev, BRIDGE_ATTR("root_id"), &info->designated_root);
+	fetch_id(dev, BRIDGE_ATTR("bridge_id"), &info->bridge_id);
+	info->root_path_cost = fetch_int(dev, BRIDGE_ATTR("root_path_cost"));
+	fetch_tv(dev, BRIDGE_ATTR("max_age"), &info->max_age);
+	fetch_tv(dev, BRIDGE_ATTR("hello_time"), &info->hello_time);
+	fetch_tv(dev, BRIDGE_ATTR("forward_delay"), &info->forward_delay);
+	fetch_tv(dev, BRIDGE_ATTR("max_age"), &info->bridge_max_age);
+	fetch_tv(dev, BRIDGE_ATTR("hello_time"), &info->bridge_hello_time);
+	fetch_tv(dev, BRIDGE_ATTR("forward_delay"), &info->bridge_forward_delay);
+	fetch_tv(dev, BRIDGE_ATTR("ageing_time"), &info->ageing_time);
+	fetch_tv(dev, BRIDGE_ATTR("hello_timer"), &info->hello_timer_value);
+	fetch_tv(dev, BRIDGE_ATTR("tcn_timer"), &info->tcn_timer_value);
+	fetch_tv(dev, BRIDGE_ATTR("topology_change_timer"), 
 		 &info->topology_change_timer_value);;
-	fetch_tv(sdir, "gc_timer", &info->gc_timer_value);
+	fetch_tv(dev, BRIDGE_ATTR("gc_timer"), &info->gc_timer_value);
 
-	info->root_port = fetch_int(sdir, "root_port");
-	info->stp_enabled = fetch_int(sdir, "stp_state");
-	info->topology_change = fetch_int(sdir, "topology_change");
-	info->topology_change_detected = fetch_int(sdir, "topology_change_detected");
-	sysfs_close_directory(sdir);
+	info->root_port = fetch_int(dev, BRIDGE_ATTR("root_port"));
+	info->stp_enabled = fetch_int(dev, BRIDGE_ATTR("stp_state"));
+	info->topology_change = fetch_int(dev, BRIDGE_ATTR("topology_change"));
+	info->topology_change_detected = fetch_int(dev, 
+						   BRIDGE_ATTR("topology_change_detected"));
+	sysfs_close_class_device(dev);
 
 	return 0;
+
+fallback:
 #endif
+	return old_get_bridge_info(bridge, info);
 }
 
 static int old_get_port_info(const char *brname, const char *port,
@@ -293,61 +272,74 @@ static int old_get_port_info(const char *brname, const char *port,
 int br_get_port_info(const char *brname, const char *port, 
 		     struct port_info *info)
 {
-#ifndef HAVE_LIBSYSFS
-	return old_get_port_info(brname, port, info);
-#else
-	struct sysfs_directory *sdir
-		= bridge_sysfs_directory(port, SYSFS_BRIDGE_PORT_ATTR);
+#ifdef HAVE_LIBSYSFS
+	struct sysfs_class_device *dev;
+	char path[SYSFS_PATH_MAX];
 
-	if (!sdir) 
-		return old_get_port_info(brname, port, info);
+	if (!br_class_net) 
+		goto fallback;
+
+	dev = sysfs_get_class_device(br_class_net, port);
+	if (!dev)
+		goto fallback;
+
+	snprintf(path, SYSFS_PATH_MAX, "%s/brport", dev->path);
+	if (!sysfs_path_is_dir(path)) {
+		sysfs_close_class_device(dev);
+		goto fallback;
+	}
 
 	memset(info, 0, sizeof(*info));
-	fetch_id(sdir, "designated_root", &info->designated_root);
-	fetch_id(sdir, "designated_bridge", &info->designated_bridge);
-	info->port_no = fetch_int(sdir, "port_no");
-	info->port_id = fetch_int(sdir, "port_id");
-	info->designated_port = fetch_int(sdir, "designated_port");
-	info->path_cost = fetch_int(sdir, "path_cost");
-	info->designated_cost = fetch_int(sdir, "designated_cost");
-	info->state = fetch_int(sdir, "state");
-	info->top_change_ack = fetch_int(sdir, "change_ack");
-	info->config_pending = fetch_int(sdir, "config_pending");
-	fetch_tv(sdir, "message_age_timer", 
+
+	fetch_id(dev, BRPORT(designated_root), &info->designated_root);
+	fetch_id(dev, BRPORT(designated_bridge), &info->designated_bridge);
+	info->port_no = fetch_int(dev, BRPORT(port_no));
+	info->port_id = fetch_int(dev, BRPORT(port_id));
+	info->designated_port = fetch_int(dev, BRPORT(designated_port));
+	info->path_cost = fetch_int(dev, BRPORT(path_cost));
+	info->designated_cost = fetch_int(dev, BRPORT(designated_cost));
+	info->state = fetch_int(dev, BRPORT(state));
+	info->top_change_ack = fetch_int(dev, BRPORT(change_ack));
+	info->config_pending = fetch_int(dev, BRPORT(config_pending));
+	fetch_tv(dev, BRPORT(message_age_timer), 
 		 &info->message_age_timer_value);
-	fetch_tv(sdir, "forward_delay_timer",
+	fetch_tv(dev, BRPORT(forward_delay_timer),
 		 &info->forward_delay_timer_value);
-	fetch_tv(sdir, "hold_timer",
+	fetch_tv(dev, BRPORT(hold_timer),
 		 &info->hold_timer_value);
-	sysfs_close_directory(sdir);
+	sysfs_close_class_device(dev);
 
 	return 0;
+fallback:
 #endif
+	return old_get_port_info(brname, port, info);
 }
 
 
 static int br_set(const char *bridge, const char *name,
 		  unsigned long value, unsigned long oldcode)
 {
-	int ret;
+	int ret = -1;
 #ifdef HAVE_LIBSYSFS
-	struct sysfs_directory *sdir;
-	
-	sdir = bridge_sysfs_directory(bridge, SYSFS_BRIDGE_ATTR);
-	if (sdir) {
+	struct sysfs_class_device *dev;
+
+	dev = sysfs_get_class_device(br_class_net, bridge);
+	if (dev) {
 		struct sysfs_attribute *attr;
 		char buf[32];
+		char path[SYSFS_PATH_MAX];
+
 		sprintf(buf, "%ld", value);
-		
-		attr = sysfs_get_directory_attribute(sdir, (char *) name);
-		if (attr) 
+		snprintf(path, SYSFS_PATH_MAX, "%s/bridge/%s", dev->path, name);
+
+		attr = sysfs_open_attribute(path);
+		if (attr) {
 			ret = sysfs_write_attribute(attr, buf, strlen(buf));
-		else {
-			ret = -1;
-			errno = EINVAL;
+			sysfs_close_attribute(attr);
 		}
-		sysfs_close_directory(sdir);
-	} else 
+		sysfs_close_class_device(dev);
+
+	} else
 #endif
 	{
 		struct ifreq ifr;
@@ -400,37 +392,40 @@ static int port_set(const char *bridge, const char *ifname,
 		    const char *name, unsigned long value, 
 		    unsigned long oldcode)
 {
-	int ret, index;
+	int ret = -1;
 #ifdef HAVE_LIBSYSFS
-	struct sysfs_directory *sdir;
+	struct sysfs_class_device *dev;
 
-	sdir = bridge_sysfs_directory(ifname, SYSFS_BRIDGE_PORT_ATTR);
-	if (sdir) {
+	dev = sysfs_get_class_device(br_class_net, ifname);
+	if (dev) {
 		struct sysfs_attribute *attr;
+		char path[SYSFS_PATH_MAX];
 		char buf[32];
 
 		sprintf(buf, "%ld", value);
+		snprintf(path, SYSFS_PATH_MAX, "%s/brport/%s", dev->path, name);
 
-		attr = sysfs_get_directory_attribute(sdir, (char *) name);
-		if (attr) 
+		attr = sysfs_open_attribute(path);
+		if (attr) {
 			ret = sysfs_write_attribute(attr, buf, strlen(buf));
-		else {
-			ret = -1; 
-			errno = EINVAL;
+			sysfs_close_attribute(attr);
 		}
-		sysfs_close_directory(sdir);
+		sysfs_close_class_device(dev);
 	} else
 #endif
-	if ( (index = get_portno(bridge, ifname)) < 0)
-		ret = index;
+	{
+		int index = get_portno(bridge, ifname);
 
-	else {
-		struct ifreq ifr;
-		unsigned long args[4] = { oldcode, index, value, 0 };
-
-		strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
-		ifr.ifr_data = (char *) &args;
-		ret = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
+		if (index < 0)
+			ret = index;
+		else {
+			struct ifreq ifr;
+			unsigned long args[4] = { oldcode, index, value, 0 };
+			
+			strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
+			ifr.ifr_data = (char *) &args;
+			ret = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
+		}
 	}
 
 	return ret < 0 ? errno : 0;
