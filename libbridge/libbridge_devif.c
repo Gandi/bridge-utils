@@ -191,27 +191,27 @@ int br_get_bridge_info(const char *bridge, struct bridge_info *info)
 	}
 
 	memset(info, 0, sizeof(*info));
-	fetch_id(dev, BRIDGE_ATTR("root_id"), &info->designated_root);
-	fetch_id(dev, BRIDGE_ATTR("bridge_id"), &info->bridge_id);
-	info->root_path_cost = fetch_int(dev, BRIDGE_ATTR("root_path_cost"));
-	fetch_tv(dev, BRIDGE_ATTR("max_age"), &info->max_age);
-	fetch_tv(dev, BRIDGE_ATTR("hello_time"), &info->hello_time);
-	fetch_tv(dev, BRIDGE_ATTR("forward_delay"), &info->forward_delay);
-	fetch_tv(dev, BRIDGE_ATTR("max_age"), &info->bridge_max_age);
-	fetch_tv(dev, BRIDGE_ATTR("hello_time"), &info->bridge_hello_time);
-	fetch_tv(dev, BRIDGE_ATTR("forward_delay"), &info->bridge_forward_delay);
-	fetch_tv(dev, BRIDGE_ATTR("ageing_time"), &info->ageing_time);
-	fetch_tv(dev, BRIDGE_ATTR("hello_timer"), &info->hello_timer_value);
-	fetch_tv(dev, BRIDGE_ATTR("tcn_timer"), &info->tcn_timer_value);
-	fetch_tv(dev, BRIDGE_ATTR("topology_change_timer"), 
+	fetch_id(dev, BRIDGEATTR("root_id"), &info->designated_root);
+	fetch_id(dev, BRIDGEATTR("bridge_id"), &info->bridge_id);
+	info->root_path_cost = fetch_int(dev, BRIDGEATTR("root_path_cost"));
+	fetch_tv(dev, BRIDGEATTR("max_age"), &info->max_age);
+	fetch_tv(dev, BRIDGEATTR("hello_time"), &info->hello_time);
+	fetch_tv(dev, BRIDGEATTR("forward_delay"), &info->forward_delay);
+	fetch_tv(dev, BRIDGEATTR("max_age"), &info->bridge_max_age);
+	fetch_tv(dev, BRIDGEATTR("hello_time"), &info->bridge_hello_time);
+	fetch_tv(dev, BRIDGEATTR("forward_delay"), &info->bridge_forward_delay);
+	fetch_tv(dev, BRIDGEATTR("ageing_time"), &info->ageing_time);
+	fetch_tv(dev, BRIDGEATTR("hello_timer"), &info->hello_timer_value);
+	fetch_tv(dev, BRIDGEATTR("tcn_timer"), &info->tcn_timer_value);
+	fetch_tv(dev, BRIDGEATTR("topology_change_timer"), 
 		 &info->topology_change_timer_value);;
-	fetch_tv(dev, BRIDGE_ATTR("gc_timer"), &info->gc_timer_value);
+	fetch_tv(dev, BRIDGEATTR("gc_timer"), &info->gc_timer_value);
 
-	info->root_port = fetch_int(dev, BRIDGE_ATTR("root_port"));
-	info->stp_enabled = fetch_int(dev, BRIDGE_ATTR("stp_state"));
-	info->topology_change = fetch_int(dev, BRIDGE_ATTR("topology_change"));
+	info->root_port = fetch_int(dev, BRIDGEATTR("root_port"));
+	info->stp_enabled = fetch_int(dev, BRIDGEATTR("stp_state"));
+	info->topology_change = fetch_int(dev, BRIDGEATTR("topology_change"));
 	info->topology_change_detected = fetch_int(dev, 
-						   BRIDGE_ATTR("topology_change_detected"));
+						   BRIDGEATTR("topology_change_detected"));
 	sysfs_close_class_device(dev);
 
 	return 0;
