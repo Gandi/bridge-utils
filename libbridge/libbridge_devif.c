@@ -36,7 +36,7 @@ static unsigned char getoctet(const char *cp)
 }
 
 #define BRIDGEATTR(_a)	SYSFS_BRIDGE_ATTR "/" _a
-#define BRPORT(_a)	SYSFS_BRIDE_PORT_ATTR "/" _a
+#define BRPORT(_a)	SYSFS_BRIDGE_PORT_ATTR "/" _a
 
 static void fetch_id(struct sysfs_class_device *dev,
 		     const char *name, struct bridge_id *id)
