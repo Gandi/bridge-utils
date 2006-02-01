@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <dirent.h>
 
 #include "libbridge.h"
 #include "libbridge_private.h"
@@ -206,8 +207,8 @@ int br_foreach_port(const char *brname,
 {
 #ifdef HAVE_LIBSYSFS
 	struct sysfs_class_device *dev;
-	struct dlist *list;
-	const char *name;
+	DIR *dir;
+	struct dirent *dirent;
 	int err = 0;
 	char path[SYSFS_PATH_MAX];
 
@@ -218,24 +219,27 @@ int br_foreach_port(const char *brname,
 	snprintf(path, sizeof(path), "%s/%s", 
 		 dev->path, SYSFS_BRIDGE_PORT_SUBDIR);
 
-	dprintf("path=%s\n", path);
-	list = sysfs_open_directory_list(path);
-	if (!list) {
+
+	dir = opendir(path);
+	if (!dir) {
 		/* no /sys/class/net/ethX/brif subdirectory
 		 * either: old kernel, or not really a bridge
 		 */
-		dprintf("sysfs_open_directory failed\n");
 		goto old;
 	}
 
 	err = 0;
-	dlist_for_each_data(list, name, const char) {
+	while ((dirent = readdir(dir)) != NULL) {
+		if (0 == strcmp(dirent->d_name, "."))
+			 continue;
+		if (0 == strcmp(dirent->d_name, ".."))
+			continue;
 		++err;
-		if (iterator(brname, name, arg))
+		if (iterator(brname, dirent->d_name, arg))
 			break;
 	}
+	closedir(dir);
 
-	sysfs_close_list(list);
 	return err;
 
  old:

@@ -180,12 +180,14 @@ int br_get_bridge_info(const char *bridge, struct bridge_info *info)
 		goto fallback;
 
 	dev = sysfs_get_class_device(br_class_net, bridge);
-	if (!dev) 
+	if (!dev) {
+		dprintf("get_class_device '%s' failed\n", bridge);
 		goto fallback;
-
+	}
 
 	snprintf(path, SYSFS_PATH_MAX, "%s/bridge", dev->path);
-	if (!sysfs_path_is_dir(path)) {
+	if (sysfs_path_is_dir(path)) {
+		dprintf("path '%s' is not a directory\n", path);
 		sysfs_close_class_device(dev);
 		goto fallback;
 	}
@@ -284,28 +286,28 @@ int br_get_port_info(const char *brname, const char *port,
 		goto fallback;
 
 	snprintf(path, SYSFS_PATH_MAX, "%s/brport", dev->path);
-	if (!sysfs_path_is_dir(path)) {
+	if (sysfs_path_is_dir(path)) {
 		sysfs_close_class_device(dev);
 		goto fallback;
 	}
 
 	memset(info, 0, sizeof(*info));
 
-	fetch_id(dev, BRPORT(designated_root), &info->designated_root);
-	fetch_id(dev, BRPORT(designated_bridge), &info->designated_bridge);
-	info->port_no = fetch_int(dev, BRPORT(port_no));
-	info->port_id = fetch_int(dev, BRPORT(port_id));
-	info->designated_port = fetch_int(dev, BRPORT(designated_port));
-	info->path_cost = fetch_int(dev, BRPORT(path_cost));
-	info->designated_cost = fetch_int(dev, BRPORT(designated_cost));
-	info->state = fetch_int(dev, BRPORT(state));
-	info->top_change_ack = fetch_int(dev, BRPORT(change_ack));
-	info->config_pending = fetch_int(dev, BRPORT(config_pending));
-	fetch_tv(dev, BRPORT(message_age_timer), 
+	fetch_id(dev, BRPORT("designated_root"), &info->designated_root);
+	fetch_id(dev, BRPORT("designated_bridge"), &info->designated_bridge);
+	info->port_no = fetch_int(dev, BRPORT("port_no"));
+	info->port_id = fetch_int(dev, BRPORT("port_id"));
+	info->designated_port = fetch_int(dev, BRPORT("designated_port"));
+	info->path_cost = fetch_int(dev, BRPORT("path_cost"));
+	info->designated_cost = fetch_int(dev, BRPORT("designated_cost"));
+	info->state = fetch_int(dev, BRPORT("state"));
+	info->top_change_ack = fetch_int(dev, BRPORT("change_ack"));
+	info->config_pending = fetch_int(dev, BRPORT("config_pending"));
+	fetch_tv(dev, BRPORT("message_age_timer"), 
 		 &info->message_age_timer_value);
-	fetch_tv(dev, BRPORT(forward_delay_timer),
+	fetch_tv(dev, BRPORT("forward_delay_timer"),
 		 &info->forward_delay_timer_value);
-	fetch_tv(dev, BRPORT(hold_timer),
+	fetch_tv(dev, BRPORT("hold_timer"),
 		 &info->hold_timer_value);
 	sysfs_close_class_device(dev);
 
@@ -329,7 +331,7 @@ static int br_set(const char *bridge, const char *name,
 		char buf[32];
 		char path[SYSFS_PATH_MAX];
 
-		sprintf(buf, "%ld", value);
+		snprintf(buf, sizeof(buf), "%ld\n", value);
 		snprintf(path, SYSFS_PATH_MAX, "%s/bridge/%s", dev->path, name);
 
 		attr = sysfs_open_attribute(path);
@@ -338,7 +340,6 @@ static int br_set(const char *bridge, const char *name,
 			sysfs_close_attribute(attr);
 		}
 		sysfs_close_class_device(dev);
-
 	} else
 #endif
 	{
