@@ -188,7 +188,6 @@ int br_get_bridge_info(const char *bridge, struct bridge_info *info)
 	snprintf(path, SYSFS_PATH_MAX, "%s/bridge", dev->path);
 	if (sysfs_path_is_dir(path)) {
 		dprintf("path '%s' is not a directory\n", path);
-		sysfs_close_class_device(dev);
 		goto fallback;
 	}
 
@@ -214,7 +213,6 @@ int br_get_bridge_info(const char *bridge, struct bridge_info *info)
 	info->topology_change = fetch_int(dev, BRIDGEATTR("topology_change"));
 	info->topology_change_detected = fetch_int(dev, 
 						   BRIDGEATTR("topology_change_detected"));
-	sysfs_close_class_device(dev);
 
 	return 0;
 
@@ -287,7 +285,6 @@ int br_get_port_info(const char *brname, const char *port,
 
 	snprintf(path, SYSFS_PATH_MAX, "%s/brport", dev->path);
 	if (sysfs_path_is_dir(path)) {
-		sysfs_close_class_device(dev);
 		goto fallback;
 	}
 
@@ -309,7 +306,6 @@ int br_get_port_info(const char *brname, const char *port,
 		 &info->forward_delay_timer_value);
 	fetch_tv(dev, BRPORT("hold_timer"),
 		 &info->hold_timer_value);
-	sysfs_close_class_device(dev);
 
 	return 0;
 fallback:
@@ -339,7 +335,6 @@ static int br_set(const char *bridge, const char *name,
 			ret = sysfs_write_attribute(attr, buf, strlen(buf));
 			sysfs_close_attribute(attr);
 		}
-		sysfs_close_class_device(dev);
 	} else
 #endif
 	{
@@ -411,7 +406,6 @@ static int port_set(const char *bridge, const char *ifname,
 			ret = sysfs_write_attribute(attr, buf, strlen(buf));
 			sysfs_close_attribute(attr);
 		}
-		sysfs_close_class_device(dev);
 	} else
 #endif
 	{
