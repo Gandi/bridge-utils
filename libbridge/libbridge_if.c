@@ -115,3 +115,31 @@ int br_del_interface(const char *bridge, const char *dev)
 
 	return err < 0 ? errno : 0;
 }
+
+int br_set_mirror(const char *bridge, const char *dev)
+{
+	struct ifreq ifr;
+	int ifindex = if_nametoindex(dev);
+
+	if (ifindex == 0) 
+		return ENODEV;
+	
+	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
+	ifr.ifr_ifindex = ifindex;
+
+	return ioctl(br_socket_fd, SIOCBRADDMIRROR, &ifr);
+}
+
+int br_remove_mirror(const char *bridge, const char *dev)
+{
+	struct ifreq ifr;
+	int ifindex = if_nametoindex(dev);
+
+	if (ifindex == 0) 
+		return ENODEV;
+	
+	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
+	ifr.ifr_ifindex = ifindex;
+
+	return ioctl(br_socket_fd, SIOCBRDELMIRROR, &ifr);
+}

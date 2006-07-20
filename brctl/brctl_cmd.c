@@ -157,6 +157,71 @@ static int br_cmd_delif(int argc, char *const* argv)
 	return 0;
 }
 
+
+static int br_cmd_addmirror(int argc, char *const* argv)
+{
+	int err;
+	const char *brname = argv[1];
+	const char *ifname = argv[2];
+
+	err = br_set_mirror(brname, ifname);
+	switch(err) {
+	case 0:
+		return 0;
+
+	case ENODEV:
+		if (if_nametoindex(ifname) == 0)
+			fprintf(stderr, "interface %s does not exist!\n", ifname);
+		else
+			fprintf(stderr, "bridge %s does not exist\n", brname);
+		break;
+
+	case EBUSY:
+		fprintf(stderr,	"device %s is already a member of a bridge or is a mirror\n",
+			ifname);
+		break;
+
+	case ELOOP:
+		fprintf(stderr, "device %s is a bridge device itself\n", brname);
+		break;
+
+	default:
+		fprintf(stderr, "can't set %s to mirror bridge %s: %s\n",
+			ifname, brname, strerror(err));
+	}
+	return 1;
+
+}
+
+static int br_cmd_delmirror(int argc, char *const* argv)
+{
+	int err;
+	const char *brname = argv[1];
+	const char *ifname = argv[2];
+
+
+	err = br_remove_mirror(brname, ifname);
+
+	switch (err) {
+	case 0:
+		return 0;
+
+	case ENODEV:
+		fprintf(stderr, "interface %s does not exist!\n", ifname);
+		break;
+
+	case EINVAL:
+		fprintf(stderr, "device %s is not the mirror of %s\n",
+			ifname, brname);
+		break;
+
+	default:
+		fprintf(stderr, "can't delete %s from %s: %s\n",
+			ifname, brname, strerror(err));
+	}
+	return 1;
+}
+
 static int br_cmd_setageing(int argc, char *const* argv)
 {
 	int err;
@@ -421,6 +486,11 @@ static const struct command commands[] = {
 	  "<bridge>\t\tshow bridge stp info"},
 	{ 2, "stp", br_cmd_stp,
 	  "<bridge> {on|off}\tturn stp on/off" },
+	{ 2, "addmirror", br_cmd_addmirror, 
+	  "<bridge> <device>\tset mirror to bridge" },
+	{ 2, "delmirror", br_cmd_delmirror,
+	  "<bridge> <device>\tdelete mirror from bridge" },
+	
 };
 
 const struct command *command_lookup(const char *cmd)
