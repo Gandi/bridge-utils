@@ -99,7 +99,7 @@ static int br_cmd_addif(int argc, char *const* argv)
 			if (if_nametoindex(ifname) == 0)
 				fprintf(stderr, "interface %s does not exist!\n", ifname);
 			else
-				fprintf(stderr, "bridge %s does not exist\n", brname);
+				fprintf(stderr, "bridge %s does not exist!\n", brname);
 			break;
 
 		case EBUSY:
@@ -139,8 +139,10 @@ static int br_cmd_delif(int argc, char *const* argv)
 			continue;
 
 		case ENODEV:
-			fprintf(stderr, "interface %s does not exist!\n", 
-				ifname);
+			if (if_nametoindex(ifname) == 0)
+				fprintf(stderr, "interface %s does not exist!\n", ifname);
+			else
+				fprintf(stderr, "bridge %s does not exist!\n", brname);
 			break;
 
 		case EINVAL:
