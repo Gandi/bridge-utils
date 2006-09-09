@@ -4,8 +4,8 @@
 #undef HAVE_LIBSYSFS
 
 /* Name of package */
-#undef PACKAGE
+#undef PACKAGE_NAME
 
 /* Version number of package */
-#undef VERSION
+#undef PACKAGE_VERSION
 

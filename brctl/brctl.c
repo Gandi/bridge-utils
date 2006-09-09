@@ -50,7 +50,7 @@ int main(int argc, char *const* argv)
 			help();
 			return 0;
 		case 'V':
-			printf("%s, %s\n", PACKAGE, VERSION);
+			printf("%s, %s\n", PACKAGE_NAME, PACKAGE_VERSION);
 			return 0;
 		default:
 			fprintf(stderr, "Unknown option '%c'\n", f);
