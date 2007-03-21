@@ -1,0 +1,7 @@
+Makefile
+aclocal.m4
+autom4te.cache/
+bridge-utils.spec
+config.log
+config.status
+configure
