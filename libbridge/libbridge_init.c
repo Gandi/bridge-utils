@@ -32,7 +32,7 @@ int br_socket_fd = -1;
 
 int br_init(void)
 {
-	if ((br_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	if ((br_socket_fd = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0)
 		return errno;
 	return 0;
 }
