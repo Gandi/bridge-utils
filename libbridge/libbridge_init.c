@@ -186,12 +186,18 @@ int br_foreach_port(const char *brname,
 	struct dirent **namelist;
 	char path[SYSFS_PATH_MAX];
 
-	snprintf(path, SYSFS_PATH_MAX, SYSFS_CLASS_NET "%s/brport", brname);
+	snprintf(path, SYSFS_PATH_MAX, SYSFS_CLASS_NET "%s/brif", brname);
 	count = scandir(path, &namelist, 0, alphasort);
 	if (count < 0)
 		return old_foreach_port(brname, iterator, arg);
 
 	for (i = 0; i < count; i++) {
+		if (namelist[i]->d_name[0] == '.'
+		    && (namelist[i]->d_name[1] == '\0'
+			|| (namelist[i]->d_name[1] == '.'
+			    && namelist[i]->d_name[2] == '\0')))
+			continue;
+
 		if (iterator(brname, namelist[i]->d_name, arg))
 			break;
 	}
