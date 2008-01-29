@@ -22,11 +22,8 @@ libbridge_OBJECTS=$(libbridge_SOURCES:.c=.o)
 
 all:	libbridge.a
 
-install: libbridge.a
-	mkdir -p $(DESTDIR)$(includedir)
-	install -m 644 libbridge.h $(DESTDIR)$(includedir)
-	mkdir -p $(DESTDIR)$(libdir)
-	install -m 644 libbridge.a $(DESTDIR)$(libdir)
+# At present there is no need for a bridge-utils-devel package
+install:
 
 
 clean:
