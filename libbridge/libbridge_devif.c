@@ -40,11 +40,15 @@ static void fetch_id(const char *dev, const char *name, struct bridge_id *id)
 {
 	FILE *f = fpopen(dev, name);
 
-	fscanf(f, "%2hhx%2hhx.%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx",
-	      &id->prio[0], &id->prio[1],
-	      &id->addr[0], &id->addr[1], &id->addr[2],
-	      &id->addr[3], &id->addr[4], &id->addr[5]);
-	fclose(f);
+	if (!f)
+		fprintf(stderr, "%s: %s\n", dev, strerror(errno));
+	else {
+		fscanf(f, "%2hhx%2hhx.%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx",
+		       &id->prio[0], &id->prio[1],
+		       &id->addr[0], &id->addr[1], &id->addr[2],
+		       &id->addr[3], &id->addr[4], &id->addr[5]);
+		fclose(f);
+	}
 }
 
 /* Fetch an integer attribute out of sysfs. */
