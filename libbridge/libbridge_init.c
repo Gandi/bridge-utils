@@ -49,7 +49,11 @@ static int isbridge(const struct dirent *entry)
 	char path[SYSFS_PATH_MAX];
 	struct stat st;
 
-	snprintf(path, SYSFS_PATH_MAX, SYSFS_CLASS_NET "%s/bridge", entry->d_name);
+	if (entry->d_name[0] == '.')
+		return 0;
+	
+	snprintf(path, SYSFS_PATH_MAX, 
+		 SYSFS_CLASS_NET "%s/bridge", entry->d_name);
 	return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 }
 
