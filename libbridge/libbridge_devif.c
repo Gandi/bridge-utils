@@ -58,11 +58,10 @@ static int fetch_int(const char *dev, const char *name)
 	int value = -1;
 
 	if (!f) 
-		fprintf(stderr, "%s: %s\n", dev, strerror(errno));
-	else {
-		fscanf(f, "%i", &value);
-		fclose(f);
-	}
+		return 0;
+
+	fscanf(f, "%i", &value);
+	fclose(f);
 	return value;
 }
 
