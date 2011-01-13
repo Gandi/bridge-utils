@@ -338,8 +338,15 @@ static int show_bridge(const char *name, void *arg)
 
 static int br_cmd_show(int argc, char *const* argv)
 {
+	int i;
+
 	printf("bridge name\tbridge id\t\tSTP enabled\tinterfaces\n");
-	br_foreach_bridge(show_bridge, NULL);
+	if (argc == 1)
+		br_foreach_bridge(show_bridge, NULL);
+	else
+		for(i = 2; i <= argc; i++)
+			show_bridge(argv[i - 1], NULL);
+
 	return 0;
 }
 
@@ -454,7 +461,8 @@ static const struct command commands[] = {
 	  "<bridge> <port> <cost>\tset path cost" },
 	{ 3, "setportprio", br_cmd_setportprio,
 	  "<bridge> <port> <prio>\tset port priority" },
-	{ 0, "show", br_cmd_show, "\t\t\tshow a list of bridges" },
+	{ 0, "show", br_cmd_show,
+	  "[ <bridge> ]\t\tshow a list of bridges" },
 	{ 1, "showmacs", br_cmd_showmacs, 
 	  "<bridge>\t\tshow a list of mac addrs"},
 	{ 1, "showstp", br_cmd_showstp, 
