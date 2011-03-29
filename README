@@ -9,8 +9,6 @@ because the old code was a big mess and nonextensible.
 The new code is published at:
 	http://bridge.sourceforge.net/
 
-
-
 Advantages of the new code are:
 - Support for multiple bridge port groups (i.e. multiple independent
   bridges in one machine).
@@ -26,7 +24,7 @@ Advantages of the new code are:
 
 
 If you have any comments, questions or suggestions, please send email to
-the mailing list bridge@osdl.org
+the mailing list bridge@linux-foundation.org
 --------------------------
 
 Files in this package:
