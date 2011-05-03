@@ -280,25 +280,38 @@ fallback:
 	return old_get_port_info(brname, port, info);
 }
 
+static int set_sysfs(const char *path, unsigned long value)
+{
+	int fd, ret = 0, cc;
+	char buf[32];
+
+	fd = open(path, O_WRONLY);
+	if (fd < 0)
+		return -1;
+
+	cc = snprintf(buf, sizeof(buf), "%lu\n", value);
+	if (write(fd, buf, cc) < 0)
+		ret = -1;
+	close(fd);
+
+	return ret;
+}
+
 
 static int br_set(const char *bridge, const char *name,
 		  unsigned long value, unsigned long oldcode)
 {
 	int ret;
 	char path[SYSFS_PATH_MAX];
-	FILE *f;
 
-	snprintf(path, SYSFS_PATH_MAX, SYSFS_CLASS_NET "%s/%s", bridge, name);
+	snprintf(path, SYSFS_PATH_MAX, SYSFS_CLASS_NET "%s/bridge/%s",
+		 bridge, name);
 
-	f = fopen(path, "w");
-	if (f) {
-		ret = fprintf(f, "%ld\n", value);
-		fclose(f);
-	} else {
+	if ((ret = set_sysfs(path, value)) < 0) {
 		/* fallback to old ioctl */
 		struct ifreq ifr;
 		unsigned long args[4] = { oldcode, value, 0, 0 };
-		
+
 		strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
 		ifr.ifr_data = (char *) &args;
 		ret = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
@@ -348,14 +361,10 @@ static int port_set(const char *bridge, const char *ifname,
 {
 	int ret;
 	char path[SYSFS_PATH_MAX];
-	FILE *f;
 
 	snprintf(path, SYSFS_PATH_MAX, SYSFS_CLASS_NET "%s/brport/%s", ifname, name);
-	f = fopen(path, "w");
-	if (f) {
-		ret = fprintf(f, "%ld\n", value);
-		fclose(f);
-	} else {
+
+	if ((ret = set_sysfs(path, value)) < 0) {
 		int index = get_portno(bridge, ifname);
 
 		if (index < 0)
