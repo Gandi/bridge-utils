@@ -89,7 +89,7 @@ data. Machines can move to other ports, network cards can be replaced
 .B brctl showmacs <brname>
 shows a list of learned MAC addresses for this bridge.
 
-.B brctl setageingtime <brname> <time>
+.B brctl setageing <brname> <time>
 sets the ethernet (MAC) address ageing time, in seconds. After <time>
 seconds of not having seen a frame coming from a certain address, the
 bridge will time out (delete) that address from the Forwarding
