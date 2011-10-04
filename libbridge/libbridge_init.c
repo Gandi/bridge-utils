@@ -48,6 +48,7 @@ static int isbridge(const struct dirent *entry)
 {
 	char path[SYSFS_PATH_MAX];
 	struct stat st;
+	int ret, saved_errno;
 
 	if (entry->d_name[0] == '.'
 	    && (entry->d_name[1] == '\0'
@@ -57,7 +58,14 @@ static int isbridge(const struct dirent *entry)
 
 	snprintf(path, SYSFS_PATH_MAX, 
 		 SYSFS_CLASS_NET "%s/bridge", entry->d_name);
-	return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+
+	/* Workaround old glibc breakage.
+	   If errno is set, then it fails scandir! */
+	saved_errno = errno;
+	ret = (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
+	errno = saved_errno;
+
+	return ret;
 }
 
 /*
