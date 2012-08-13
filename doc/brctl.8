@@ -22,7 +22,7 @@ brctl \- ethernet bridge administration
 .SH DESCRIPTION
 .B brctl
 is used to set up, maintain, and inspect the ethernet bridge
-configuration in the linux kernel.
+configuration in the Linux kernel.
 
 An ethernet bridge is a device commonly used to connect different
 networks of ethernets together, so that these ethernets will appear as
@@ -106,15 +106,15 @@ Multiple ethernet bridges can work together to create even larger
 networks of ethernets using the IEEE 802.1d spanning tree
 protocol. This protocol is used for finding the shortest path between
 two ethernets, and for eliminating loops from the topology. As this
-protocol is a standard, linux bridges will interwork properly with
-other third party bridge products. Bridges communicate with eachother
+protocol is a standard, Linux bridges will interwork properly with
+other third party bridge products. Bridges communicate with each other
 by sending and receiving BPDUs (Bridge Protocol Data Units). These
 BPDUs can be recognised by an ethernet destination address of
 01:80:c2:00:00:00.
 
 The spanning tree protocol can also be turned off (for those
 situations where it just doesn't make sense, for example when this
-linux box is the only bridge on the LAN, or when you know that there
+Linux box is the only bridge on the LAN, or when you know that there
 are no loops in the topology.)
 
 .IR brctl(8)
