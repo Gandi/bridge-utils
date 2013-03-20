@@ -33,3 +33,5 @@ cscope.*
 
 *.orig
 *.rej
+autom4te.cache/
+brctl/brctl
