@@ -14,7 +14,7 @@ distdir = $(PACKAGE)-$(VERSION)
 SUBDIRS=libbridge brctl doc
 
 all:
-	for x in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$x ; done
+	for x in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$x || exit 1 ; done
 
 clean:
 	for x in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$x clean ; done
@@ -28,5 +28,5 @@ maintainer-clean: distclean
 	rm -f brctl/Makefile libbridge/Makefile doc/Makefile
 
 install:
-	for x in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$x install; done
+	for x in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$x install || exit 1 ; done
 
