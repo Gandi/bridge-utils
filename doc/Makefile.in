@@ -10,8 +10,6 @@ bindir=@bindir@
 sbindir=@sbindir@
 mandir=@mandir@
 
-SUBDIRS=libbridge brctl
-
 all:
 
 clean:
