@@ -186,6 +186,7 @@ int br_get_bridge_info(const char *bridge, struct bridge_info *info)
 
 	info->root_port = fetch_int(path, "root_port");
 	info->stp_enabled = fetch_int(path, "stp_state");
+	info->trill_enabled = fetch_int(path, "trill_state");
 	info->topology_change = fetch_int(path, "topology_change");
 	info->topology_change_detected = fetch_int(path, "topology_change_detected");
 
@@ -406,6 +407,17 @@ static inline void __copy_fdb(struct fdb_entry *ent,
 	__jiffies_to_tv(&ent->ageing_timer_value, f->ageing_timer_value);
 }
 
+static inline void __copy_fdb_nick(struct fdb_entry_nick *ent,
+				   const struct __fdb_entry_nick *f)
+{
+	memcpy(ent->mac_addr, f->mac_addr, 6);
+	ent->nick=f->nick;
+	ent->port_no = f->port_no;
+	ent->is_local = f->is_local;
+	__jiffies_to_tv(&ent->ageing_timer_value, f->ageing_timer_value);
+}
+
+
 int br_read_fdb(const char *bridge, struct fdb_entry *fdbs, 
 		unsigned long offset, int num)
 {
@@ -446,4 +458,73 @@ int br_read_fdb(const char *bridge, struct fdb_entry *fdbs,
 		__copy_fdb(fdbs+i, fe+i);
 
 	return n;
+}
+
+int br_read_fdb_nick(const char *bridge, struct fdb_entry_nick *fdbs,
+		     unsigned long offset, int num)
+{
+	FILE *f;
+	int i, n;
+	struct __fdb_entry_nick fe[num];
+	char path[SYSFS_PATH_MAX];
+	unsigned long args[4] = { BRCTL_GET_FDB_ENTRIES_NICK,
+		(unsigned long) fe, num, offset };
+	struct ifreq ifr;
+	int retries = 0;
+	strncpy(ifr.ifr_name, bridge, IFNAMSIZ);
+	ifr.ifr_data = (char *) args;
+retry:
+	n = ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
+	/* table can change during ioctl processing */
+	if (n < 0 && errno == EAGAIN && ++retries < 10) {
+		sleep(0);
+		goto retry;
+	}
+	for (i = 0; i < n; i++)
+		__copy_fdb_nick(fdbs+i, fe+i);
+	return n;
+}
+
+int br_set_trill_state(const char *br, int trill_state)
+{
+	return br_set(br, "trill_state", trill_state,
+		      BRCTL_SET_BRIDGE_TRILL_STATE);
+}
+
+int br_set_trill_vni(const char *br, const char *p , int vni)
+{
+	int ret;
+	int index = get_portno(br, p);
+	/* fallback to old ioctl */
+	if (index < 0)
+		ret = index;
+	else {
+		struct ifreq ifr;
+		unsigned long args[4] = { BRCTL_SET_BRIDGE_TRILL_PORT_VNI, index,
+			(int)vni, 0 };
+		strncpy(ifr.ifr_name, br, IFNAMSIZ);
+		ifr.ifr_data = (char *) &args;
+		ret=ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
+	}
+	return ret < 0 ? errno : 0;
+}
+
+int vs_get_port_list(const char *brname, u_int32_t *ifindex)
+{
+	int ret;
+	unsigned long args[4] = { BRCTL_GET_VS_PORT_LIST,
+		(unsigned long)ifindex, MAX_PORTS };
+	struct ifreq ifr;
+	memset(ifindex, 0, sizeof(ifindex));
+	strncpy(ifr.ifr_name, brname, IFNAMSIZ);
+	ifr.ifr_data = (char *) &args;
+	ret=ioctl(br_socket_fd, SIOCDEVPRIVATE, &ifr);
+	if ( ret< 0) {
+		dprintf("get_portno: get ports of %s failed: %s\n",
+			brname, strerror(errno));
+		goto error;
+	}
+	return ret;
+error:
+       return -1;
 }

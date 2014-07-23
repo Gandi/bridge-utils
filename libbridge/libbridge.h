@@ -24,6 +24,12 @@
 #include <linux/if.h>
 #include <linux/if_bridge.h>
 
+#define BRCTL_SET_BRIDGE_TRILL_STATE 19
+#define BRCTL_SET_BRIDGE_TRILL_PORT_VNI 20
+#define BRCTL_GET_VS_PORT_LIST 21
+#define BRCTL_GET_FDB_ENTRIES_NICK 22
+
+
 /* defined in net/if.h but that conflicts with linux/if.h... */
 extern unsigned int if_nametoindex (const char *__ifname);
 extern char *if_indextoname (unsigned int __ifindex, char *__ifname);
@@ -48,6 +54,7 @@ struct bridge_info
 	struct timeval bridge_forward_delay;
 	u_int16_t root_port;
 	unsigned char stp_enabled;
+	unsigned char trill_enabled;
 	unsigned char topology_change;
 	unsigned char topology_change_detected;
 	struct timeval ageing_time;
@@ -64,6 +71,27 @@ struct fdb_entry
 	unsigned char is_local;
 	struct timeval ageing_timer_value;
 };
+
+struct fdb_entry_nick
+{
+	u_int8_t mac_addr[6];
+	u_int16_t nick;
+	u_int16_t port_no;
+	unsigned char is_local;
+	struct timeval ageing_timer_value;
+};
+
+struct __fdb_entry_nick
+{
+	__u8 mac_addr[6];
+	__u8 port_no;
+	__u8 is_local;
+	__u32 ageing_timer_value;
+	__u8 port_hi;
+	__u8 pad0;
+	__u16 nick ;
+};
+
 
 struct port_info
 {
@@ -117,4 +145,10 @@ extern int br_read_fdb(const char *br, struct fdb_entry *fdbs,
 		       unsigned long skip, int num);
 extern int br_set_hairpin_mode(const char *bridge, const char *dev,
 			       int hairpin_mode);
+extern int br_read_fdb_nick(const char *br, struct fdb_entry_nick *fdbs,
+			    unsigned long skip, int num);
+extern int br_set_trill_state(const char *br, int trill_state);
+extern int br_set_trill_vni(const char *br, const char *p , int vlanlabel);
+extern int vs_get_port_list(const char *brname,u_int32_t *ifindex);
+
 #endif
