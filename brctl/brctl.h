@@ -19,6 +19,9 @@
 #ifndef _BRCTL_H
 #define _BRCTL_H
 
+#define MAX_PORTS      1024
+#define VS_SEPARATOR 0xF0F0F0F0
+
 struct command
 {
 	int		nargs;

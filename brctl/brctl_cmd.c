@@ -302,6 +302,53 @@ static int br_cmd_stp(int argc, char *const* argv)
 	return err != 0;
 }
 
+static int br_cmd_trill(int argc, char *const* argv)
+{
+	int trill, err;
+	if (!strcmp(argv[2], "on")  || !strcmp(argv[2], "yes")  || !strcmp(argv[2], "1"))
+		trill = 1;
+	else if (!strcmp(argv[2], "off") || !strcmp(argv[2], "no")   || !strcmp(argv[2], "0"))
+		trill = 0;
+	else
+		fprintf(stderr, "expect on/off for argument\n");  return 1;
+	err = br_set_trill_state(argv[1], trill);
+	if (err)
+		fprintf(stderr, "set trill status failed: %s\n", strerror(errno));
+	return err != 0;
+}
+
+static int br_cmd_setvni(int argc, char* const* argv)
+{
+	int err;
+	u_int32_t label, vni;
+	if (sscanf(argv[3], "%i", &label) != 1) {
+		fprintf(stderr, "bad vni value\n");
+		return 1;
+	}
+	if((label > 16777215) || (label < 1)) {
+		fprintf(stderr, "s-vid must be in range [1..16777215] \n");
+		return 1;
+	}
+	vni = (((label &0x0FFF000) << 4  ) | (label & 0x00000FFF));
+	err = br_set_trill_vni(argv[1], argv[2], vni);
+	printf("vni %i\n",vni);
+	printf("adding vni %i  to interface %s  %s\n",label,argv[2],
+	       err == 0 ? "suceeded":"failed !!!\n------\
+	       \nvni could be applied only to existant guest vif\n------\n");
+	return err != 0;
+}
+
+static int br_cmd_delvni(int argc, char* const* argv)
+{
+	int err;
+	err = br_set_trill_vni(argv[1],argv[2],0);
+	printf("delting vni from interface %s  %s\n", argv[2],
+	       err == 0 ? "suceeded":"failed !!!\n------\
+	       \nvni could be applied only to existant guest vif\
+	       \n------\n");
+	return err!=0;
+}
+
 static int br_cmd_showstp(int argc, char *const* argv)
 {
 	struct bridge_info info;
@@ -330,7 +377,9 @@ static int show_bridge(const char *name, void *arg)
 	}
 
 	br_dump_bridge_id((unsigned char *)&info.bridge_id);
-	printf("\t%s\t\t", info.stp_enabled?"yes":"no");
+	printf("\t%s\t", info.stp_enabled?"yes":"no");
+	printf("%s\t", info.trill_enabled?"yes":"no");
+
 
 	br_dump_interface_list(name);
 	return 0;
@@ -340,7 +389,7 @@ static int br_cmd_show(int argc, char *const* argv)
 {
 	int i;
 
-	printf("bridge name\tbridge id\t\tSTP enabled\tinterfaces\n");
+	printf("bridge name\tbridge id\t\tSTP\tTRILL\tinterfaces\n");
 	if (argc == 1)
 		br_foreach_bridge(show_bridge, NULL);
 	else
@@ -402,6 +451,49 @@ static int br_cmd_showmacs(int argc, char *const* argv)
 	return 0;
 }
 
+static int br_cmd_showmacs_nick(int argc, char *const* argv)
+{
+	const char *brname = argv[1];
+	#define CHUNK 128
+	int i, n;
+	struct fdb_entry_nick *fdb = NULL;
+	int offset = 0;
+	char nick[6];
+	for(;;) {
+		fdb = realloc(fdb, (offset + CHUNK) * sizeof(struct fdb_entry_nick));
+		if (!fdb) {
+			fprintf(stderr, "Out of memory\n");
+			return 1;
+		}
+		n = br_read_fdb_nick(brname, fdb+offset, offset, CHUNK);
+		if (n == 0)
+			break;
+		if (n < 0) {
+			fprintf(stderr, "read of forward table failed: %s\n",
+				strerror(errno));
+			return 1;
+		}
+		offset += n;
+	}
+	qsort(fdb, offset, sizeof(struct fdb_entry_nick), compare_fdbs);
+	printf("port no\tmac addr\t\tnick\t\tis local?\tageing timer\n");
+	for (i = 0; i < offset; i++) {
+		const struct fdb_entry_nick *f = fdb + i;
+		sprintf(nick,"%d",f->nick);
+		if(f->nick) {
+			printf("%3i\t", f->port_no);
+			printf("%.2x:%.2x:%.2x:%.2x:%.2x:%.2x\t",
+			       f->mac_addr[0], f->mac_addr[1], f->mac_addr[2],
+			       f->mac_addr[3], f->mac_addr[4], f->mac_addr[5]);
+			printf("%s\t\t",f->nick ? nick :"no");
+			printf("%s\t\t", f->is_local?"yes":"no");
+			br_show_timer(&f->ageing_timer_value);
+			printf("\n");
+		}
+	}
+	return 0;
+}
+
 static int br_cmd_hairpin(int argc, char *const* argv)
 {
 	int hairpin, err;
@@ -438,6 +530,31 @@ static int br_cmd_hairpin(int argc, char *const* argv)
 	return err != 0;
 }
 
+static int br_cmd_showvs(int argc, char *const* argv)
+{
+	const char *brname = argv[1];
+	u_int32_t ifindex[MAX_PORTS];
+	int i, ret;
+	char ifname[IFNAMSIZ];
+	ret = vs_get_port_list(brname, ifindex);
+	ret = ret < MAX_PORTS ? ret : MAX_PORTS;
+	for (i = 0; i < ret; i++) {
+		printf("--------------- \nvni\t%i\ninterfaces:\n",
+		       (((ifindex[i]&0x0FFF0000) >>4 )|(ifindex[i]&0x00000FFF)));
+		i++;
+		while (ifindex[i] != VS_SEPARATOR) {
+			if(ifindex[i]) {
+				if_indextoname(ifindex[i], ifname);
+				printf("\t%s\n",ifname);
+			}
+			i++;
+		}
+	}
+	if(ret > 0)
+		printf("--------------- \n");
+	return 0;
+}
+
 static const struct command commands[] = {
 	{ 1, "addbr", br_cmd_addbr, "<bridge>\t\tadd bridge" },
 	{ 1, "delbr", br_cmd_delbr, "<bridge>\t\tdelete bridge" },
@@ -465,10 +582,20 @@ static const struct command commands[] = {
 	  "[ <bridge> ]\t\tshow a list of bridges" },
 	{ 1, "showmacs", br_cmd_showmacs, 
 	  "<bridge>\t\tshow a list of mac addrs"},
+	{ 1, "showmacs_nick", br_cmd_showmacs_nick,
+	  "<bridge>\t\tshow a list of mac addrs and correspondant nick"},
 	{ 1, "showstp", br_cmd_showstp, 
 	  "<bridge>\t\tshow bridge stp info"},
 	{ 2, "stp", br_cmd_stp,
 	  "<bridge> {on|off}\tturn stp on/off" },
+	{ 2, "trill", br_cmd_trill,
+	  "<bridge> {on|off}\tturn trill on/off" },
+	{ 3, "setvni",br_cmd_setvni,
+	  "<bridge> <port> <vni> \tset virtual network id" },
+	{ 2, "delvni", br_cmd_delvni,
+	  "<bridge> <port> \tdel virtual network id" },
+	{ 1, "showvs", br_cmd_showvs,
+	  "<bridge> \t\tshow virtual network id "},
 };
 
 const struct command *command_lookup(const char *cmd)
