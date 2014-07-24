@@ -335,6 +335,9 @@ static int br_cmd_setvni(int argc, char* const* argv)
 	printf("adding vni %i  to interface %s  %s\n",label,argv[2],
 	       err == 0 ? "suceeded":"failed !!!\n------\
 	       \nvni could be applied only to existant guest vif\n------\n");
+	if (err)
+		fprintf(stderr, "error adding vni %i on interface %s \n",
+			label, argv[2]);
 	return err != 0;
 }
 
