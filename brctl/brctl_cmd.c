@@ -309,8 +309,10 @@ static int br_cmd_trill(int argc, char *const* argv)
 		trill = 1;
 	else if (!strcmp(argv[2], "off") || !strcmp(argv[2], "no")   || !strcmp(argv[2], "0"))
 		trill = 0;
-	else
-		fprintf(stderr, "expect on/off for argument\n");  return 1;
+	else {
+		fprintf(stderr, "expect on/off for argument\n");
+		return 1;
+	}
 	err = br_set_trill_state(argv[1], trill);
 	if (err)
 		fprintf(stderr, "set trill status failed: %s\n", strerror(errno));
